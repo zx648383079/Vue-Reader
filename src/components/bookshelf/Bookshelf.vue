@@ -7,7 +7,7 @@
           <div class="read-book-history">
             <img :src="book.cover">
             <div class="info">
-              <p class="title">{{book.title}}</p>
+              <p class="title">{{book.name}}</p>
               <p class="updated">{{book.updated | ago}}：{{book.lastChapter}}</p>
             </div>
           </div>
@@ -22,7 +22,7 @@
 import api from '@/api'
 import moment from 'moment'
 import util from '@/utils'
-import { SET_CURRENT_SOURCE, SET_READ_BOOK } from '@/store/types'
+import { SET_READ_BOOK } from '@/store/types'
 import { Indicator } from 'mint-ui'
 
 moment.locale('zh-cn')
@@ -64,8 +64,8 @@ export default {
       api.getUpdate(this.getBookList()).then(response => {
         localShelf = util.getLocalStroageData('followBookList')
         response.data.forEach((book) => {
-          Object.assign(book, localShelf[book._id])
-          book.cover = util.staticPath + book.cover
+          Object.assign(book, localShelf[book.id])
+          book.cover = book.cover
           that.books.push(book)
         })
         Indicator.close()
@@ -76,9 +76,8 @@ export default {
     },
 
     readbook (book) {
-      this.$store.commit(SET_READ_BOOK, book)
-      this.$store.commit(SET_CURRENT_SOURCE, book.source)
-      this.$router.push('/readbook/' + book._id)
+      this.$store.commit('book' + SET_READ_BOOK, book)
+      this.$router.push('/readbook/' + book.id)
     },
 
     showDelBookBtn (e) {

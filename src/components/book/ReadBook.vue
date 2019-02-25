@@ -1,7 +1,7 @@
 <template>
   <div id="container" class="container">
-    <mt-header fixed :title="$store.state.bookInfo.name" v-if="operation" class="head">
-      <router-link :to="/book/+$store.state.bookInfo.id" slot="left">
+    <mt-header fixed :title="$store.state.book.bookInfo.name" v-if="operation" class="head">
+      <router-link :to="/book/+$store.state.book.bookInfo.id" slot="left">
         <mt-button icon="back">返回</mt-button>
       </router-link>
     </mt-header>
@@ -57,7 +57,7 @@
     <!--目录-->
     <div class="chapter-list" v-show="isShowChapter" v-scroll="onScroll">
       <div class="chapter-contents">
-        <p>{{$store.state.bookInfo.name}}：目录</p>
+        <p>{{$store.state.book.bookInfo.name}}：目录</p>
         <v-touch tag="span" class="chapter-sort" @tap="descSort">
           <img src="../../assets/down.svg" v-if="!chapterDescSort">
           <img src="../../assets/up.svg" v-else>
@@ -203,10 +203,9 @@ export default {
     recordReadHis () {
       let readRecord = util.getLocalStroageData('followBookList') || {}
       readRecord[this.$route.params.bookId] = {
-        cover: this.$store.state.bookInfo.cover,
-        title: this.$store.state.bookInfo.title,
+        cover: this.$store.state.book.bookInfo.cover,
+        name: this.$store.state.book.bookInfo.name,
         chapter: this.currentChapter,
-        source: this.$store.state.source,
         readPos: document.getElementById('container').scrollTop
       }
       util.setLocalStroageData('followBookList', readRecord)

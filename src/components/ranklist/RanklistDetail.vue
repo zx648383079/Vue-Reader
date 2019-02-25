@@ -2,7 +2,7 @@
   <div class="book-list-wrap">
     <!--<mt-loadmore :bottom-method="loadBottom" ref="loadmore">-->
     <v-touch tag="ul" @swipeleft="swipeleft" @swiperight="swiperight">
-      <Booklist v-for="book in rank.books" :book="book" :key="book._id"></Booklist>
+      <Booklist v-for="book in books" :book="book" :key="book.id"></Booklist>
     </v-touch>
     <!--</mt-loadmore>-->
   </div>
@@ -20,7 +20,6 @@ export default {
   },
   data () {
     return {
-      rank: {},
       books: [],
       ranktype: '',
       rankTypeStack: ['/ranklist/weekRank', '/ranklist/monthRank', '/ranklist/totalRank'],
@@ -49,9 +48,7 @@ export default {
           break
       }
       api.getRankList(this.rankType).then(response => {
-        this.rank = response.data.ranking
-        // 首次加载前20条数据
-        this.books = response.data.ranking.books.slice(0, 20)
+        this.books = response.data
         Indicator.close()
       }).catch(error => {
         Indicator.close()
@@ -73,8 +70,8 @@ export default {
       this.$router.push(this.rankTypeStack[this.currentRank])
     },
     loadBottom () {
-      this.books = this.rank.books.slice(0, this.currentLoadPage * 20 + 20)
-      this.currentLoadPage++
+      // this.books = this.books.slice(0, this.currentLoadPage * 20 + 20)
+      // this.currentLoadPage++
     }
   },
   watch: {

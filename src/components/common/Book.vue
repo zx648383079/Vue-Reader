@@ -49,7 +49,6 @@ import {
   Indicator
 } from 'mint-ui'
 import {
-  SET_CURRENT_SOURCE,
   SET_READ_BOOK
 } from '@/store/types'
 
@@ -89,13 +88,13 @@ export default {
     /**
      * 设置默认小说源为优质书源
      */
-    if (!this.$store.state.source) {
-      api.getMixSource(this.$route.params.bookId).then(response => {
-        this.$store.commit(SET_CURRENT_SOURCE, response.data[0]._id)
-      }).catch(err => {
-        console.log(err)
-      })
-    }
+    // if (!this.$store.state.source) {
+    //   api.getMixSource(this.$route.params.bookId).then(response => {
+    //     this.$store.commit(SET_CURRENT_SOURCE, response.data[0]._id)
+    //   }).catch(err => {
+    //     console.log(err)
+    //   })
+    // }
   },
   beforeRouteEnter (to, form, next) {
     next(vm => {
@@ -109,13 +108,13 @@ export default {
     if (to.path.indexOf('changeSource') !== -1 || to.path.indexOf('readbook') !== -1) {
       next()
     } else {
-      this.$store.commit(SET_CURRENT_SOURCE, '')
+      // this.$store.commit(SET_CURRENT_SOURCE, '')
       next()
     }
   },
   methods: {
     readBook () {
-      this.$store.commit(SET_READ_BOOK, this.book)
+      this.$store.commit('book/' + SET_READ_BOOK, this.book)
       this.$router.push('/readbook/' + this.$route.params.bookId)
     },
     isFollowBook () {

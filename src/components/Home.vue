@@ -63,7 +63,7 @@ export default {
     }
   },
   mounted () {
-    this.selected = this.$store.state.previousPosition
+    this.selected = this.$store.state.book.previousPosition
   }
 }
 </script>

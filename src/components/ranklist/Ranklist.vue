@@ -29,7 +29,7 @@ export default {
     }
   },
   beforeRouteLeave (to, from, next) {
-    this.$store.commit(SET_BACK_POSITION, '排行')
+    this.$store.commit('book/' + SET_BACK_POSITION, '排行')
     next()
   }
 }

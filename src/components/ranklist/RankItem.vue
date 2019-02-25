@@ -1,12 +1,11 @@
 <template>
   <v-touch @tap="showRankList" class="rank-item">
     <img :src="imgUrl">
-    <span>{{rankInfo.title}}</span>
+    <span>{{rankInfo.name}}</span>
   </v-touch>
 </template>
 
 <script>
-import util from '@/utils'
 export default {
   name: 'RankItem',
   data () {
@@ -17,7 +16,7 @@ export default {
   props: ['rankInfo'],
   computed: {
     imgUrl () {
-      return util.staticPath + '/' + this.rankInfo.cover
+      return this.rankInfo.cover
     }
   },
   methods: {

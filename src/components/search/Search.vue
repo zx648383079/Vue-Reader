@@ -8,9 +8,9 @@
     </div>
     <!--显示热搜词与搜索历史（优先级最低）-->
     <div v-if="!searchWord" class="search-info">
-      <ul class="search-word" v-if="searchHotWords">
+      <ul class="search-word" v-if="searchHotWords && searchHotWords.length > 0">
         <v-touch tag="li" class="search-hot-word" v-for="(searchHotWord, index) in searchHotWords" :key="index" @tap="fuzzySearch">
-          {{searchHotWord.word}}
+          {{searchHotWord}}
         </v-touch>
       </ul>
       <div class="search-history">
@@ -73,9 +73,7 @@ export default {
   created () {
     this.searchHistory = util.getLocalStroageData('searchHistory') ? util.getLocalStroageData('searchHistory') : []
     api.getHotWords().then(response => {
-      this.searchHotWords = response.data.searchHotWords
-      // 只取前15个热词
-      this.searchHotWords.length = 15
+      this.searchHotWords = response.data
     }).catch(err => {
       console.log(err)
     })
@@ -112,7 +110,7 @@ export default {
       if (searchHistory.indexOf(this.searchWord) < 0) {
         util.setLocalStroageData('searchHistory', [this.searchWord, ...searchHistory])
       }
-      this.$store.commit(SET_BACK_POSITION, '搜索')
+      this.$store.commit('book/' + SET_BACK_POSITION, '搜索')
       api.fuzzySearch(this.searchWord).then(response => {
         this.searchResult = response.data
         this.autoCompleteList = []

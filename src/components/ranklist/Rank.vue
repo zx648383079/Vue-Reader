@@ -1,9 +1,9 @@
 <template>
   <div>
     <div>
-      <p>男生</p>
+      <p>总榜</p>
       <ul class="rank-type">
-        <li v-for="item in ranklist.male" v-if="!item.collapse" :key="item._id">
+        <li v-for="item in ranklist" v-if="!item.collapse" :key="item.id">
           <RankItem :rankInfo="item"></RankItem>
         </li>
         <v-touch tag="li" class="other-rank" @tap="showMoreMaleRank">
@@ -16,27 +16,7 @@
           </span>
         </v-touch>
         <ul v-show="maleOtherRankIsShow" class="rank-type">
-          <li v-for="item in ranklist.male" v-if="item.collapse" :key="item._id">
-            <RankItem :rankInfo="item"></RankItem>
-          </li>
-        </ul>
-      </ul>
-      <p>女生</p>
-      <ul class="rank-type">
-        <li v-for="item in ranklist.female" v-if="!item.collapse" :key="item._id">
-          <RankItem :rankInfo="item"></RankItem>
-        </li>
-        <v-touch tag="li" class="other-rank" @tap="showMoreFemaleRank">
-          <div class="rank-item">
-            <img src="../../assets/rank_other.svg"> 别人家的排行榜
-          </div>
-          <span class="angle">
-            <img src="../../assets/up.svg" v-if="femaleOtherRankIsShow">
-            <img src="../../assets/down.svg" v-else>
-          </span>
-        </v-touch>
-        <ul v-show="femaleOtherRankIsShow" class="rank-type">
-          <li v-for="item in ranklist.female" v-if="item.collapse" :key="item._id">
+          <li v-for="item in ranklist" v-if="item.collapse" :key="item._id">
             <RankItem :rankInfo="item"></RankItem>
           </li>
         </ul>
