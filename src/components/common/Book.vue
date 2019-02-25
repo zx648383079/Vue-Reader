@@ -4,18 +4,15 @@
       <div slot="left" @click="$router.go(backStep)">
         <mt-button icon="back">返回</mt-button>
       </div>
-      <router-link v-if="book" :to="/changeSource/+book._id" slot="right">
-        <mt-button>换源</mt-button>
-      </router-link>
     </mt-header>
     <section>
       <div class="book-info">
-        <img v-if="book" :src="imgUrl" onerror="javascript:this.src='https://github.com/zimplexing/vue-nReader/blob/master/screenshot/errBook.png?raw=true'">
+        <img v-if="book" :src="imgUrl">
         <div class="book-info-detail">
-          <p class="book-title" v-if="book">{{book.title}}</p>
-          <p class="book-author" v-if="book">{{book.author}}</p>
+          <p class="book-title" v-if="book">{{book.name}}</p>
+          <p class="book-author" v-if="book">{{book.author.name}}</p>
           <p class="reader-info" v-if="book">
-            <span></span>{{book.updated | ago}} | {{wordCount}}万 | {{book.cat}}</p>
+            <span></span>{{book.updated_at | ago}} | {{wordCount}}万 | {{book.category.name}}</p>
         </div>
       </div>
       <div class="book-operation">
@@ -25,21 +22,21 @@
       <div class="book-status">
         <div class="list-item">
           <span class="item">追书人气</span>
-          <span v-if="book">{{book.latelyFollower}}</span>
+          <span v-if="book">{{book.click_count}}</span>
         </div>
         <div class="list-item">
           <span class="item">读者留存率</span>
-          <span v-if="book">{{book.retentionRatio}}%</span>
+          <span v-if="book">{{100}}%</span>
         </div>
         <div class="list-item">
           <span class="item">日更新字数</span>
-          <span v-if="book">{{book.serializeWordCount}}</span>
+          <span v-if="book">{{0}}</span>
         </div>
       </div>
-      <div class="book-tag" v-if="book">
+      <div class="book-tag" v-if="book && book.tags">
         <span v-for="(tag, index) in book.tags" :key="index" class="tag">{{tag}}</span>
       </div>
-      <p class="book-intro" v-if="book">{{book.longIntro}}</p>
+      <p class="book-intro" v-if="book">{{book.description}}</p>
     </section>
   </div>
 </template>
@@ -73,17 +70,17 @@ export default {
   },
   computed: {
     wordCount () {
-      return parseInt(this.book.wordCount / 10000, 10)
+      return parseInt(this.book.size / 10000, 10)
     },
     imgUrl () {
-      return util.staticPath + this.book.cover
+      return this.book.cover
     }
   },
   created () {
     Indicator.open()
     // 获取小说详情
     api.getBook(this.$route.params.bookId).then(response => {
-      this.book = response.data
+      this.book = response
       this.isFollowBook()
       Indicator.close()
     }, err => {
@@ -124,7 +121,7 @@ export default {
     isFollowBook () {
       // 返回本地是否缓存（加入书架）
       let localShelf = util.getLocalStroageData('followBookList')
-      this.isFollowed = !!(localShelf && localShelf[this.book._id])
+      this.isFollowed = !!(localShelf && localShelf[this.book.id])
     },
     followAction () {
       let localShelf = util.getLocalStroageData('followBookList') ? util.getLocalStroageData('followBookList') : {}

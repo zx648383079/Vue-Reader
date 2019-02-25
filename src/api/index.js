@@ -26,14 +26,14 @@ export default {
      * http://api.zhuishushenqi.com/cats/lv2
      */
   getCategory () {
-    return fetch('/cats/lv2/statistics')
+    return fetch('book/category').then(res => res.data)
   },
 
   /**
      * 获取细分的类别
      */
   getCategoryDetail () {
-    return fetch('/cats/lv2')
+    return this.getCategory()
   },
 
   /**
@@ -47,8 +47,8 @@ export default {
      * https://api.zhuishushenqi.com/book/by-categories?gender=male&type=hot&major=%E5%A5%87%E5%B9%BB&minor=&start=0&limit=20
      */
   // todo 入参需要用es6优化
-  getNovelListByCat (gender, type, major, minor = '', start = 0, limit = 20) {
-    return fetch('/book/by-categories?gender=' + gender + '&type=' + type + '&major=' + major + '&minor=' + minor + '&start=' + start + '&limit=' + limit)
+  getNovelListByCat (category, type, start = 0, limit = 20) {
+    return fetch('book?category=' + category + '&type=' + type + '&page=' + start + '&per_page=' + limit)
   },
 
   /**
@@ -56,7 +56,7 @@ export default {
      * @param {String} bookId 小说id
      */
   getBook (bookId) {
-    return fetch('/book/' + bookId)
+    return fetch('book?id=' + bookId)
   },
 
   /**
@@ -90,17 +90,16 @@ export default {
      * 获取小说章节
      * @param {String} sourceId 小说源id
      */
-  getChapters (sourceId) {
-    return fetch('/atoc/' + sourceId + '?view=chapters')
+  getChapters (bookId) {
+    return fetch('book/chapter?book=' + bookId)
   },
 
   /**
      * 获取小说章节内容
-     * @param {String} chapterUrl 章节url
-     * http://chapterup.zhuishushenqi.com/chapter/http://vip.zhuishushenqi.com/chapter/5817f1161bb2ca566b0a5973?cv=1481275033588
+     * @param {String} id 章节url
      */
-  getBookChapterContent (chapterUrl) {
-    return fetch('/getChapter?chapterUrl=' + chapterUrl)
+  getBookChapterContent (id) {
+    return fetch('book/chapter?id=' + id)
   },
 
   /**
@@ -114,10 +113,9 @@ export default {
   /**
      * 搜索自动补充
      * @param {String} searchWord 搜索内容
-     * http://api05iye5.zhuishushenqi.com/book/auto-complete?query=%E6%96%97%E7%BD%97
      */
   autoComplete (searchWord) {
-    return fetch('/book/auto-complete?query=' + searchWord)
+    return fetch('book/home/suggest?keywords=' + searchWord).then(res => res.data)
   },
 
   /**
@@ -125,7 +123,7 @@ export default {
      *  @param {String} searchWord 搜索内容
      */
   fuzzySearch (searchWord) {
-    return fetch('/book/fuzzy-search?query=' + searchWord)
+    return fetch('book?keywords=' + searchWord)
   },
 
   /**

@@ -1,7 +1,7 @@
 <template>
   <div id="container" class="container">
-    <mt-header fixed :title="$store.state.bookInfo.title" v-if="operation" class="head">
-      <router-link :to="/book/+$store.state.bookInfo._id" slot="left">
+    <mt-header fixed :title="$store.state.bookInfo.name" v-if="operation" class="head">
+      <router-link :to="/book/+$store.state.bookInfo.id" slot="left">
         <mt-button icon="back">返回</mt-button>
       </router-link>
     </mt-header>
@@ -57,7 +57,7 @@
     <!--目录-->
     <div class="chapter-list" v-show="isShowChapter" v-scroll="onScroll">
       <div class="chapter-contents">
-        <p>{{$store.state.bookInfo.title}}：目录</p>
+        <p>{{$store.state.bookInfo.name}}：目录</p>
         <v-touch tag="span" class="chapter-sort" @tap="descSort">
           <img src="../../assets/down.svg" v-if="!chapterDescSort">
           <img src="../../assets/up.svg" v-else>
@@ -79,7 +79,7 @@ export default {
   name: 'ReadBook',
   data () {
     return {
-      bookChapter: {},
+      chapters: [],
       bookChaptersContent: '',
       loadedChapters: [], // 缓存滚动加载的章节列表
       loadPages: 1, // 滚动加载的记次
@@ -93,8 +93,7 @@ export default {
   },
   computed: {
     bookChaptersBody () {
-      let content = this.bookChaptersContent && this.bookChaptersContent.cpContent ? 'cpContent' : 'body'
-      return this.bookChaptersContent && this.bookChaptersContent[content].replace(/\n/g, '<br/>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp')
+      return this.bookChaptersContent && this.bookChaptersContent.content.replace(/\n/g, '<br/>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp')
     }
   },
   beforeCreate () {
@@ -102,11 +101,11 @@ export default {
   },
   created () {
     let readRecord = util.getLocalStroageData('followBookList')
-    api.getChapters(this.$store.state.source).then(response => {
-      this.bookChapter = response.data
+    api.getChapters(this.$route.params.bookId).then(response => {
+      this.chapters = response.data
       this.currentChapter = readRecord && readRecord[this.$route.params.bookId] && readRecord[this.$route.params.bookId].chapter ? readRecord[this.$route.params.bookId].chapter : 0
       // 默认取前50章节
-      this.loadedChapters = this.bookChapter.chapters.slice(0, 50)
+      this.loadedChapters = this.chapters.slice(0, 50)
       Indicator.close()
       this.getBookChapterContent()
     }).catch(err => {
@@ -136,21 +135,15 @@ export default {
   methods: {
     getBookChapterContent () {
       // 不同源之间的章节数量不一样，当前阅读章节与源章节取小的，避免报错
-      let lastChapter = this.currentChapter >= this.bookChapter.chapters.length - 1 ? this.bookChapter.chapters.length - 1 : this.currentChapter
+      let lastChapter = this.currentChapter >= this.chapters.length - 1 ? this.chapters.length - 1 : this.currentChapter
       Indicator.open('加载中')
       // 无论正序还是倒叙 当前章节字段都是 按正序的序号
-      api.getBookChapterContent(this.bookChapter.chapters[lastChapter].link).then(response => {
+      api.getBookChapterContent(this.chapters[lastChapter].id).then(response => {
         /**
                  *  判断是否是正版源，如果是正版，给出换源提示
                  */
-        if (response.data.chapter.cpContent && response.data.chapter.isVip) {
-          MessageBox.alert('章节为正版源，请换源后重试').then(() => {
-            this.$router.push('/changeSource/' + this.$route.params.bookId)
-          })
-        } else {
-          this.bookChaptersContent = response.data.chapter
-          document.getElementById('container').scrollTop = 0
-        }
+        this.bookChaptersContent = response
+        document.getElementById('container').scrollTop = 0
         Indicator.close()
       }).catch(err => {
         Indicator.close()

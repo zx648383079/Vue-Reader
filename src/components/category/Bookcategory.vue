@@ -1,9 +1,9 @@
 <template>
   <div>
-    <section v-for="(item ,key, index) in category" :key="index">
-      <p class="category-type">{{categoryType[key]}}</p>
+    <section>
+      <p class="category-type">全部</p>
       <ul>
-        <li v-for="(cat, index) in item" :key="index" @click="$router.push({path:'/bookcat/detail',query:{gender:key,major:cat.name}})">
+        <li v-for="(cat, index) in categories" :key="index" @click="tapCategory(cat)">
           <p class="category">{{cat.name}}</p>
           <span class="book-count">{{cat.bookCount}}</span>
         </li>
@@ -18,21 +18,21 @@ export default {
   name: 'Booklcat',
   data () {
     return {
-      category: null,
-      categoryType: {
-        male: '男生',
-        female: '女生',
-        press: '出版'
-      }
+      categories: null
     }
   },
   created () {
-    api.getCategory().then(response => {
-      this.category = response.data
+    api.getCategory().then(data => {
+      this.categories = data
       this.loading = false
     }).catch(err => {
       console.log(err)
     })
+  },
+  methods: {
+    tapCategory (cat) {
+      this.$router.push({path: '/bookcat/detail', query: {id: cat.id, title: cat.name}})
+    }
   }
 }
 </script>

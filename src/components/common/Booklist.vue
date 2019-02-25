@@ -2,16 +2,15 @@
   <li @click="getBook()">
     <img :src="imgUrl">
     <div class="book-info">
-      <p class="book-title">{{book.title}}</p>
-      <p class="book-author">{{book.author}} | {{book.cat}}</p>
+      <p class="book-title">{{book.name}}</p>
+      <p class="book-author">{{book.author.name}} | {{book.category.name}}</p>
       <p class="short-intro">{{book.shortIntro}}</p>
-      <p class="reader-info">{{latelyFollower}}万人气 | {{book.retentionRatio}}%读者留存</p>
+      <p class="reader-info">{{latelyFollower}}万人气 | {{100}}%读者留存</p>
     </div>
   </li>
 </template>
 
 <script>
-import util from '@/utils'
 export default {
   name: 'Bookslist',
   data () {
@@ -22,10 +21,10 @@ export default {
   props: ['book'],
   computed: {
     latelyFollower () {
-      return (this.book.latelyFollower / 10000).toFixed(1)
+      return (1 / 10000).toFixed(1)
     },
     imgUrl () {
-      return util.staticPath + this.book.cover
+      return this.book.cover
     }
   },
   methods: {
@@ -34,7 +33,7 @@ export default {
       // if(this.$route.path.indexOf('/search') === -1){
       //     this.$store.commit('setPrePath', this.$route.fullPath);
       // }
-      this.$router.push('/book/' + this.book._id)
+      this.$router.push('/book/' + this.book.id)
     }
   }
 }

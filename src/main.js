@@ -8,12 +8,14 @@ import Vuex from 'vuex'
 import store from './store'
 import Http from './utils/http'
 import MintUI from 'mint-ui'
+import VueTouch from 'vue-touch'
 import 'mint-ui/lib/style.css'
 
 Vue.config.productionTip = false
 Vue.use(Vuex)
 Vue.use(MintUI)
 Vue.use(Http)
+Vue.use(VueTouch, {name: 'v-touch'})
 
 router.beforeEach((to, from, next) => {
   store.state.token = sessionStorage.getItem('token') // 获取本地存储的token

@@ -35,7 +35,7 @@
     </ul>
     <!--显示搜索结果（优先级中）-->
     <ul class="search-result" v-if="searchResult.length">
-      <Booklist v-for="book in searchResult" :book="book" :key="book._id"></Booklist>
+      <Booklist v-for="book in searchResult" :book="book" :key="book.id"></Booklist>
     </ul>
   </div>
 </template>
@@ -92,8 +92,8 @@ export default {
   },
   methods: {
     autoComplete () {
-      api.autoComplete(this.searchWord).then(response => {
-        this.autoCompleteList = response.data.keywords
+      api.autoComplete(this.searchWord).then(data => {
+        this.autoCompleteList = data
       }).catch(err => {
         console.log(err)
       })
@@ -109,10 +109,12 @@ export default {
       this.searchWord = el.target.innerText || this.searchWord
       // 设置搜索历史
       let searchHistory = util.getLocalStroageData('searchHistory') ? util.getLocalStroageData('searchHistory') : []
-      util.setLocalStroageData('searchHistory', [this.searchWord, ...searchHistory])
+      if (searchHistory.indexOf(this.searchWord) < 0) {
+        util.setLocalStroageData('searchHistory', [this.searchWord, ...searchHistory])
+      }
       this.$store.commit(SET_BACK_POSITION, '搜索')
       api.fuzzySearch(this.searchWord).then(response => {
-        this.searchResult = response.data.books
+        this.searchResult = response.data
         this.autoCompleteList = []
         Indicator.close()
       }).catch(err => {
@@ -146,6 +148,7 @@ export default {
 
 .search-info {
   width: 100vw;
+  margin-top: 2.5rem;
 }
 
 .search-input {

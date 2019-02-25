@@ -1,17 +1,17 @@
 <template>
   <div>
-    <mt-header fixed :title="major">
+    <mt-header fixed :title="title">
       <router-link to="/" slot="left">
         <mt-button icon="back">返回</mt-button>
       </router-link>
     </mt-header>
     <div class="select">
       <ul class="select-bar">
-        <v-touch tag="li" v-for="(item, index) in types" :class="{'active': index === majorSelected}" :key="index" @tap="setType(item.type,index)">{{item.name}}</v-touch>
+        <v-touch tag="li" v-for="(item, index) in types" :class="{'active': type === item.type}" :key="index" @tap="setType(item.type, index)">{{item.name}}</v-touch>
       </ul>
-      <ul class="select-bar" v-if="mins">
+      <ul class="select-bar" v-if="categories && categories.length > 0">
         <li data-type="hot">全部</li>
-        <v-touch tag="li" :class="{'active': index === minorSelected}" v-for="(minor, index) in mins" :key="index" @tap="setMinor(minor,index)">{{minor}}</v-touch>
+        <v-touch tag="li" :class="{'active': cat.id === id}" v-for="cat in categories" :key="cat.id" @tap="setCategory(cat)">{{cat.name}}</v-touch>
       </ul>
     </div>
     <mt-loadmore class="loadmore" :top-method="loadTop" :bottom-method="loadBottom" :auto-fill="false" ref="loadmore">
@@ -36,12 +36,9 @@ export default {
     return {
       books: null,
       type: 'hot',
-      gender: '',
-      major: '',
-      minor: '',
-      mins: null,
-      majorSelected: 0,
-      minorSelected: 0,
+      title: '',
+      id: 0,
+      categories: [],
       currentPage: 1,
       allLoaded: false,
       types: [{
@@ -68,11 +65,11 @@ export default {
          * 根据筛选分类获取结果
          */
     // todo 入参需要优化
-    getNovelListByCat (gender, type, major, minor) {
+    getNovelListByCat (id, type) {
       Indicator.open('加载中')
-      api.getNovelListByCat(gender, type, major, minor).then(response => {
+      api.getNovelListByCat(id, type).then(response => {
         Indicator.close()
-        this.books = response.data.books
+        this.books = response.data
       }).catch(err => {
         console.log(err)
       })
@@ -82,18 +79,17 @@ export default {
          * 选择大类分类
          */
     setType (type, index) {
-      this.majorSelected = index
       this.type = type
-      this.getNovelListByCat(this.gender, this.type, this.major, this.minor)
+      this.getNovelListByCat(this.id, this.type)
     },
 
     /**
-         * 选择子类分类
-         */
-    setMinor (minor, index) {
-      this.minorSelected = index
-      this.minor = minor
-      this.getNovelListByCat(this.gender, this.type, this.major, this.minor)
+     * 选择子类分类
+     */
+    setCateogry (cat) {
+      this.id = cat.id
+      this.title = cat.name
+      this.getNovelListByCat(this.id, this.type)
     },
 
     /**
@@ -101,19 +97,19 @@ export default {
      */
     loadTop () {
       // 加载更多数据
-      this.getNovelListByCat(this.gender, this.type, this.major, this.minor)
+      this.getNovelListByCat(this.id, this.type)
       this.$refs.loadmore.onTopLoaded()
     },
 
     /**
-         * 加载更多
-         */
+     * 加载更多
+     */
     loadBottom () {
       // 加载更多数据
       let that = this
       Indicator.open('加载中')
-      api.getNovelListByCat(this.gender, this.type, this.major, this.minor, this.currentPage * 20).then(response => {
-        that.books = [...that.books, ...response.data.books]
+      api.getNovelListByCat(this.id, this.type, this.currentPage).then(response => {
+        that.books = [...that.books, ...response.data]
         that.currentPage++
         Indicator.close()
       }).catch(err => {
@@ -125,21 +121,18 @@ export default {
 
   beforeRouteEnter (to, from, next) {
     next(vm => {
-      vm.major = vm.$route.query.major
-      vm.gender = vm.$route.query.gender
+      vm.title = vm.$route.query.title
+      vm.id = vm.$route.query.id
       /**
              * 获取大分类中的小类别
              */
       api.getCategoryDetail().then(response => {
-        response.data[vm.$route.query.gender].forEach((type) => {
-          if (type.major === vm.$route.query.major) {
-            vm.mins = type.mins
-          }
-        })
+        vm.categories = response
       }).catch(err => {
         console.log(err)
       })
-      vm.getNovelListByCat(vm.$route.query.gender, vm.type, vm.$route.query.major)
+      vm.getNovelListByCat(vm.$route.query.id, vm.type)
+      console.log(vm.$store)
       vm.$store.commit(SET_BACK_POSITION, '分类')
     })
   }
