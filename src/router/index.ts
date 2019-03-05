@@ -27,12 +27,12 @@ export default new Router({
             component: Search,
         },
         {
-            path: '/book/{:id}',
+            path: '/book/:id',
             name: 'book',
             component: Book,
         },
         {
-            path: '/chapter/{:book}',
+            path: '/chapter/:book',
             name: 'chapter',
             component: Chapter,
         },

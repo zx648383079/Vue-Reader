@@ -39,71 +39,71 @@
         </div>
     </div>
 </template>
-<script>
-import Vue from 'vue';
+<script lang="ts">
 import { removeLocalStorage, getLocalStorage, setLocalStorage } from '@/utils';
 import { getTips, getHot } from '@/api/book';
 const KEYWORDS_HISTORY = 'KEYWORDS_HISTORY';
+import { Vue, Component, Prop } from 'vue-property-decorator'
 
-export default Vue.extend({
-    data() {
-        return {
-            hot_keywords: [],
-            tip_list: [],
-            history_list: []
-        }
-    },
-    props: {
-        keywords: String
-    },
+@Component
+export default class SearchBar extends Vue {
+    @Prop(String) keywords?: string;
+
+    hot_keywords?: string[] = [];
+    tip_list?: string[] = [];
+    history_list: string[] = [];
     created() {
-        this.history_list = getLocalStorage(KEYWORDS_HISTORY, true) || []
-        getHotKeywords().then(res => {
+        this.history_list = getLocalStorage<string[]>(KEYWORDS_HISTORY, true) || []
+        getHot().then(res => {
             this.hot_keywords = res.data
         })
-    },
-    methods: {
-        tapBack() {
-            if (window.history.length <= 1) {
-                this.$router.push('/')
-                return;
-            }
-            this.$router.go(-1)
-        },
-        tapClearHistory() {
-            this.history_list = []
-            removeLocalStorage(KEYWORDS_HISTORY)
-        },
-        tapClearSearch() {
-            this.keywords = ''
-            this.tip_list = []
-        },
-        addHistory(keywords) {
-            if (this.history_list.indexOf(keywords) >= 0) {
-                return;
-            }
-            this.history_list.push(keywords);
-            if (this.history_list.length > 8) {
-                this.history_list.splice(8);
-            }
-            setLocalStorage(KEYWORDS_HISTORY, this.history_list)
-        },
-        onKeyUp(event) {
-            if (!this.keywords || this.keywords.trim().length === 0) {
-                return;
-            }
-            if (event.which === 13) {
-                this.addHistory(this.keywords);
-                this.tapSearch(this.keywords);
-                return;
-            }
-            getTips(this.keywords).then(res => {
-                this.tip_list = res.data
-            })
-        },
-        tapSearch(keywords) {
-            this.$emit('search', keywords);
+    }
+
+    tapBack() {
+        if (window.history.length <= 1) {
+            this.$router.push('/')
+            return;
         }
+        this.$router.go(-1)
+    }
+
+    tapClearHistory() {
+        this.history_list = []
+        removeLocalStorage(KEYWORDS_HISTORY)
+    }
+
+    tapClearSearch() {
+        this.keywords = ''
+        this.tip_list = []
+    }
+
+    addHistory(keywords: string) {
+        if (this.history_list.indexOf(keywords) >= 0) {
+            return;
+        }
+        this.history_list.push(keywords);
+        if (this.history_list.length > 8) {
+            this.history_list.splice(8);
+        }
+        setLocalStorage(KEYWORDS_HISTORY, this.history_list)
+    }
+
+    onKeyUp(event: any) {
+        if (!this.keywords || this.keywords.trim().length === 0) {
+            return;
+        }
+        if (event.which === 13) {
+            this.addHistory(this.keywords);
+            this.tapSearch(this.keywords);
+            return;
+        }
+        getTips(this.keywords).then(res => {
+            this.tip_list = res.data
+        })
+    }
+
+    tapSearch(keywords: string) {
+        this.$emit('search', keywords);
     }
 }
 </script>

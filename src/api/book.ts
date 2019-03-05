@@ -38,15 +38,15 @@ export interface IAuthor {
 
 export interface IBook {
     id: number,
-    name: string,
-    cover: number,
-    description: string,
-    size: number,
-    click_count: number,
-    classify: number,
+    name?: string,
+    cover?: number,
+    description?: string,
+    size?: number,
+    click_count?: number,
+    classify?: number,
     chapter_count?: number,
-    over_at: number,
-    updated_at: string,
+    over_at?: number,
+    updated_at?: string,
     category?: ICategory,
     author?: IAuthor,
     last_chapter?: IChapter,
@@ -63,7 +63,7 @@ export interface IChapter {
 
 export const getHot = () => fetch<IData<string>>('book/home/hot');
 
-export const getTips = () => fetch<IData<string>>('book/home/suggest');
+export const getTips = (keywords: string) => fetch<IData<string>>('book/home/suggest', {keywords});
 
 export const getBookList = (params: any) => fetch<IPage<IBook>>('book', params);
 

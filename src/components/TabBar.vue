@@ -45,7 +45,7 @@ export default Vue.extend({
     },
     methods: {
         tapMenu(item: IMenu) {
-            this.$router.push('/' + item.url)
+            this.$router.push({ name: item.url});
         },
     },
 })
