@@ -8,6 +8,5 @@
 </template>
 
 <style lang="scss">
-@import '@fortawesome/fontawesome-free/css/all.css';
 @import './assets/css/theme.scss';
 </style>

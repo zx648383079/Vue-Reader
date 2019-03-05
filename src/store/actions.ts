@@ -1,18 +1,2 @@
-import { Commit, Action, ActionTree } from 'vuex'
-import * as types from './types'
-import { State, Product, AddToCartPayload } from './index'
-
-const addToCart: Action<State, any> = (context: { commit: Commit }, product: Product) => {
-  if (product.inventory > 0) {
-    const payload: AddToCartPayload = {
-      id: product.id,
-    }
-    context.commit(types.ADD_TO_CART, payload)
-  }
+export default {
 }
-
-const actions: ActionTree<State, any> = {
-  addToCart,
-}
-
-export default actions

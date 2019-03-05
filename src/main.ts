@@ -4,13 +4,15 @@ import router from './router'
 import store from './store'
 import Http from './utils/http'
 
-import { currencyFilter } from './pipes/currency'
-import { assetsFilter } from './pipes/asset'
+import { assetsFilter, statusFilter, sizeFilter } from './pipes'
 import { getSessionStorage } from './utils';
 import { TOKEN_KEY } from './store/types';
 
-Vue.filter('currency', currencyFilter)
+import '@fortawesome/fontawesome-free/css/all.css';
+
 Vue.filter('assets', assetsFilter)
+Vue.filter('status', statusFilter)
+Vue.filter('size', sizeFilter)
 Vue.use(Http)
 
 router.beforeEach((to, from, next) => {

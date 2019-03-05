@@ -1,5 +1,4 @@
-import { AxiosStatic, AxiosResponse, AxiosRequestConfig } from 'axios';
-declare var axios: AxiosStatic;
+import axios from 'axios';
 import router from '@/router'
 import { Toast } from 'mint-ui'
 import { Md5 } from 'ts-md5';
@@ -69,7 +68,7 @@ axios.interceptors.response.use(
  * @param data
  * @returns {Promise}
  */
-export function fetch(url: string, params = {}) {
+export function fetch<T>(url: string, params = {}): Promise<T> {
     return new Promise((resolve, reject) => {
         axios.get(url, {
             params,
