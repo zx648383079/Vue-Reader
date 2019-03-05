@@ -11,14 +11,8 @@
     </ul>
     <p>Total: {{ total | currency }}</p>
     <p>
-      <el-button type="primary" :disabled="!products.length" @click="checkout(products)">
-        Checkout
-      </el-button>
     </p>
     <p v-show="checkoutStatus">
-      <el-tag :type="checkoutStatus === 'successful' ? 'success' : 'danger'">
-        Checkout {{ checkoutStatus }}.
-      </el-tag>
     </p>
   </div>
 </template>
@@ -26,12 +20,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
-import { Button, Tag } from 'element-ui'
-
 import { CartProduct, CheckoutStatus } from '../store'
 
-Vue.use(Button)
-Vue.use(Tag)
 
 // 以下是常规写法：
 

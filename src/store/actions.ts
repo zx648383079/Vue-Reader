@@ -1,5 +1,5 @@
 import { Commit, Action, ActionTree } from 'vuex'
-import * as types from './mutation-types'
+import * as types from './types'
 import { State, Product, AddToCartPayload } from './index'
 
 const addToCart: Action<State, any> = (context: { commit: Commit }, product: Product) => {

@@ -11,7 +11,10 @@
     "test:e2e": "vue-cli-service test:e2e"
   },
   "dependencies": {
-    "element-ui": "^2.6.1",
+    "@fortawesome/fontawesome-free": "^5.7.2",
+    "axios": "^0.18.0",
+    "mint-ui": "^2.2.13",
+    "ts-md5": "^1.2.4",
     "vue": "^2.6.8",
     "vue-class-component": "^6.3.2",
     "vue-property-decorator": "^6.1.0",
@@ -41,7 +44,7 @@
     "last 2 versions",
     "not ie <= 8"
   ],
-  "gitHooks": {
+  "gitHooks1": {
     "pre-commit": "lint-staged"
   },
   "lint-staged": {

@@ -3,11 +3,6 @@
     <li v-for="p in products" :key="p.id">
       {{ p.title }} - {{ p.price | currency }}
       <br>
-      <el-button
-        :disabled="!p.inventory"
-        @click="addToCart(p)">
-        Add to cart
-      </el-button>
     </li>
   </ul>
 </template>
@@ -15,11 +10,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters, mapActions } from 'vuex'
-import { Button } from 'element-ui'
 
 import { Product } from '../store'
 
-Vue.use(Button)
 
 // 以下是常规写法：
 

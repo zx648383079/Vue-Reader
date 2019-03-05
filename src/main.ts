@@ -2,10 +2,34 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
+import Http from './utils/http'
 
-import { currencyFilter } from './currency'
+import { currencyFilter } from './pipes/currency'
+import { assetsFilter } from './pipes/asset'
+import { getSessionStorage } from './utils';
+import { TOKEN_KEY } from './store/types';
 
 Vue.filter('currency', currencyFilter)
+Vue.filter('assets', assetsFilter)
+Vue.use(Http)
+
+router.beforeEach((to, from, next) => {
+  const token = getSessionStorage<string>(TOKEN_KEY) // 获取本地存储的token
+  if (to.meta.requireAuth) { // 判断该路由是否需要登录权限
+      if (token && token.length > 0) { // 通过vuex state获取当前的token是否存
+          next()
+      } else {
+          next({
+              path: '/login',
+              query: {
+                  redirect: to.fullPath,
+              }, // 将跳转的路由path作为参数，登录成功后跳转到该路由
+          })
+      }
+  } else {
+      next()
+  }
+})
 
 new Vue({
   router,
