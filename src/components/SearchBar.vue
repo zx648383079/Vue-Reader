@@ -1,15 +1,6 @@
 <template>
     <div>
-        <header class="top">
-            <div class="search-box">
-                <form onsubmit="return false;">
-                    <i class="fa fa-search" aria-hidden="true"></i>
-                    <input type="text" name="keywords" v-model="keywords" @keyup="onKeyUp" placeholder="搜索" autocomplete="off">
-                    <i class="fa fa-times-circle" v-if="keywords && keywords.length > 0" @click="tapClearSearch"></i>
-                </form>
-                <a class="cancel-btn" @click="tapBack">取消</a>
-            </div>
-        </header>
+        <SearchHeader :value="value" @input="updateVal" @enter="tapSearch" @keyup="onKeyUp"></SearchHeader>
         <div class="has-header">
             <div class="search-recommend-box" v-if="!tip_list || tip_list.length == 0">
                 <div class="panel" v-if="history_list && history_list.length > 0">
@@ -43,15 +34,21 @@
 import { removeLocalStorage, getLocalStorage, setLocalStorage } from '@/utils';
 import { getTips, getHot } from '@/api/book';
 const KEYWORDS_HISTORY = 'KEYWORDS_HISTORY';
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop } from 'vue-property-decorator';
+import SearchHeader from './SearchHeader.vue';
 
-@Component
+@Component({
+    components: {
+        SearchHeader
+    }
+})
 export default class SearchBar extends Vue {
-    @Prop(String) keywords?: string;
+    @Prop(String) value?: string;
 
     hot_keywords?: string[] = [];
     tip_list?: string[] = [];
     history_list: string[] = [];
+
     created() {
         this.history_list = getLocalStorage<string[]>(KEYWORDS_HISTORY, true) || []
         getHot().then(res => {
@@ -59,22 +56,14 @@ export default class SearchBar extends Vue {
         })
     }
 
-    tapBack() {
-        if (window.history.length <= 1) {
-            this.$router.push('/')
-            return;
-        }
-        this.$router.go(-1)
+
+    updateVal(val: string) {
+        this.$emit('input', val);  
     }
 
     tapClearHistory() {
         this.history_list = []
         removeLocalStorage(KEYWORDS_HISTORY)
-    }
-
-    tapClearSearch() {
-        this.keywords = ''
-        this.tip_list = []
     }
 
     addHistory(keywords: string) {
@@ -90,19 +79,19 @@ export default class SearchBar extends Vue {
 
     onKeyUp(event: any) {
         if (!this.keywords || this.keywords.trim().length === 0) {
-            return;
-        }
-        if (event.which === 13) {
-            this.addHistory(this.keywords);
-            this.tapSearch(this.keywords);
+            this.tip_list = [];
             return;
         }
         getTips(this.keywords).then(res => {
             this.tip_list = res.data
-        })
+        });
     }
 
     tapSearch(keywords: string) {
+        if (!keywords || keywords.trim().length === 0) {
+            return;
+        }
+        this.addHistory(keywords);
         this.$emit('search', keywords);
     }
 }

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <SearchBar v-show="isSearch" :keywords="keywords" @search="tapSearch"></SearchBar>
+        <SearchBar v-show="isSearch" v-model="keywords" @search="tapSearch"></SearchBar>
 
         <div class="box"
             v-infinite-scroll="loadMore"

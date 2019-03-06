@@ -30,4 +30,29 @@ export default Vue.extend({
     }
 })
 </script>
+<style lang="scss" scoped>
+header {
+    width: 100%;
+    height: 2.75rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgb(240, 78, 73);
+    color: #fff;
+    text-align: center;
+    z-index: 99;
+    border: 0;
+    .back {
+        top: 50%;
+        margin-top: -1rem;
+        font-size: 1.5625rem;
+        position: absolute;
+        left: 0.625rem;
+    }
+    .title {
+        line-height: 2.75rem;
+    }
+}
+</style>
 

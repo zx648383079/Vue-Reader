@@ -37,7 +37,7 @@ export default new Router({
             component: Chapter,
         },
         {
-            path: '/read/{:id}',
+            path: '/read/:id',
             name: 'read',
             component: Read,
         },

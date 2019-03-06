@@ -32,7 +32,13 @@
             </a>
         </div>
 
-        <mt-cell title="目录" label="连载至" :to="'/chapter/' + book.id" is-link></mt-cell>
+        <div class="line-item" @click="tapChapter">
+            <span>目录</span>
+            <div class="right">
+                <span>连载至</span>
+                <i class="fa fa-chevron-right"></i>
+            </div>
+        </div>
 
         <footer>
             <a href="">
@@ -52,7 +58,7 @@ import {Cell} from 'mint-ui';
 
 Vue.component(Cell.name, Cell);
 
-@Component({})
+@Component
 export default class Book extends Vue {
     book?: IBook;
 
@@ -62,6 +68,7 @@ export default class Book extends Vue {
         };
         getBook(this.book.id).then(res => {
             this.book = res
+            this.$forceUpdate();
         });
     }
 
@@ -72,9 +79,108 @@ export default class Book extends Vue {
         }
         this.$router.go(-1);
     }
+
+    tapChapter() {
+        if (!this.book) {
+            return;
+        }
+        this.$router.push('/chapter/' + this.book.id);
+    }
 }
 </script>
 <style lang="scss" scoped>
-
+header {
+    position: relative;
+    text-align: center;
+    background-color: rgba(255, 0, 0, .2);
+    height: 200px;
+    padding: 10px;
+    color: #fff;
+    .back,
+    .more {
+        position: absolute;
+        top: 10px;
+    }
+    .back {
+        left: 20px;
+    }
+    .more {
+        right: 20px;
+    }
+    .cover {
+        img {
+            width: 85px;
+            height: 110px;
+        }
+    }
+    .name {
+        line-height: 40px;
+        font-size: 30px;
+        font-weight: 700;
+    }
+    .tag {
+        font-size: 12px;
+    }
+}
+.tab-bar {
+    display: flex;
+    justify-content: space-around;
+    flex-flow: row nowrap;
+    padding: 10px 0;
+    background: #fff;
+    border-bottom: 1px solid #ccc;
+    a {
+        text-align: center;
+        span {
+            display: block;
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            &:last-of-type {
+                font-size: 12px;
+                color: #767676;
+            }
+        }
+    }
+}
+.line-item {
+    line-height: 40px;
+    background-color: #fff;
+    color: #333;
+    padding: 0 10px;
+    font-weight: 600;
+    .right {
+        float: right;
+        color: #767676;
+        font-size: 14px;
+        font-weight: 300;
+        span {
+            margin-right: 5px;
+        }
+    }
+    &:not(:last-of-type) {
+        border-bottom: 4px solid #f4f4f4;
+    }
+}
+footer {
+    display: flex;
+    justify-content: space-around;
+    flex-flow: row nowrap;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #fff;
+    border-top: 1px solid #ccc;
+    a {
+        display: block;
+        width: 50%;
+        text-align: center;
+        padding: 14px 0;
+        &:last-of-type {
+            background-color: #f00;
+            color: #fff;
+        }
+    }
+}
 </style>
 

@@ -1,11 +1,11 @@
 <template>
     <div>
         <BackHeader title="目录">
-            <a href="" v-if="!isSort">
+            <a class="right" @click="tapSort" v-if="!isSort">
                 <i class="fa fa-arrow-up"></i>
                 正序
             </a>
-            <a href="" v-else>
+            <a class="right" @click="tapSort" v-else>
                 <i class="fa fa-arrow-down"></i>
                 倒序
             </a>
@@ -42,9 +42,45 @@ export default class Chapter extends Vue {
     tapChapter(item: IChapter) {
         this.$router.push('/read/' + item.id);
     }
+
+    tapSort() {
+        this.isSort = !this.isSort;
+        if (this.items) {
+            this.items.reverse();
+        }
+    }
 }
 </script>
 <style lang="scss" scoped>
-
+.box {
+    margin-top: 2.75rem;
+    background-color: #fff;
+    .item {
+        margin: 0 10px;
+        padding: 5px 0 10px;
+        .title {
+            line-height: 30px;
+            font-weight: 600;
+        }
+        .time {
+            font-size: 12px;
+            color: #767676;
+        }
+        &.active {
+            .title {
+                color: #f00;
+            }
+        }
+        &:not(:last-of-type) {
+            border-bottom: 1px solid #ccc;
+        }
+    }
+}
+.right {
+    top: 50%;
+    margin-top: -.7rem;
+    position: absolute;
+    right: 0.625rem;
+}
 </style>
 

@@ -1,5 +1,6 @@
 <template>
     <div>
+        <BackHeader title="分类"></BackHeader>
         <div class="box">
             <div class="item" v-for="(item, index) in categories" :key="index" @click="tapCategory(item)">
                 {{ item.name }}
@@ -12,9 +13,11 @@
 import { Vue, Component } from 'vue-property-decorator';
 import { ICategory, getCategories } from '../api/book';
 import TabBar from '@/components/TabBar.vue';
+import BackHeader from '@/components/BackHeader.vue';
 
 @Component({
   components: {
+    BackHeader,
     TabBar,
   },
 })
