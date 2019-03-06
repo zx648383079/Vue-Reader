@@ -78,11 +78,11 @@ export default class SearchBar extends Vue {
     }
 
     onKeyUp(event: any) {
-        if (!this.keywords || this.keywords.trim().length === 0) {
+        if (!this.value || this.value.trim().length === 0) {
             this.tip_list = [];
             return;
         }
-        getTips(this.keywords).then(res => {
+        getTips(this.value).then(res => {
             this.tip_list = res.data
         });
     }

@@ -74,7 +74,7 @@ export default class Search extends Vue {
             keywords: this.keywords,
             category: this.category,
             author: this.author,
-            page: page
+            page,
         }).then(res => {
             this.has_more = res.paging.more;
             this.is_loading = false;

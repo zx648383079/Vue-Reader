@@ -57,6 +57,7 @@ export interface IChapter {
     title: string,
     size: number,
     content?: string,
+    book_id: number,
     previous?: IChapter,
     next?: IChapter,
 }

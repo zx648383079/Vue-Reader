@@ -4,15 +4,16 @@ import router from './router'
 import store from './store'
 import Http from './utils/http'
 
-import { assetsFilter, statusFilter, sizeFilter } from './pipes'
+import { assetsFilter, statusFilter, sizeFilter, agoFilter } from './pipes'
 import { getSessionStorage } from './utils';
 import { TOKEN_KEY } from './store/types';
 
 import '@fortawesome/fontawesome-free/css/all.css';
 
-Vue.filter('assets', assetsFilter)
-Vue.filter('status', statusFilter)
-Vue.filter('size', sizeFilter)
+Vue.filter('assets', assetsFilter);
+Vue.filter('status', statusFilter);
+Vue.filter('size', sizeFilter);
+Vue.filter('ago', agoFilter);
 Vue.use(Http)
 
 router.beforeEach((to, from, next) => {

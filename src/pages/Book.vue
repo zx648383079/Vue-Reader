@@ -41,9 +41,13 @@
         </div>
 
         <footer>
-            <a href="">
+            <a href="" v-if="!isFollow">
                 <i class="fa fa-plus"></i>
                 加入书架
+            </a>
+            <a v-else>
+                <i class="fa fa-check"></i>
+                已在书架
             </a>
             <a href="">
                 立即阅读
@@ -55,17 +59,20 @@
 import { Vue, Component } from 'vue-property-decorator';
 import { IBook, getBook } from '../api/book';
 import {Cell} from 'mint-ui';
+import BookRecord from '@/utils/book';
 
 Vue.component(Cell.name, Cell);
 
 @Component
 export default class Book extends Vue {
     book?: IBook;
+    isFollow: boolean = false;
 
     created() {
         this.book = {
             id: parseInt(this.$route.params.id)
         };
+        this.isFollow = BookRecord.has(this.book.id);
         getBook(this.book.id).then(res => {
             this.book = res
             this.$forceUpdate();

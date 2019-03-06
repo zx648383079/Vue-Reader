@@ -68,10 +68,12 @@
 </template>
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
-import { IChapter, getChapters, getChapter } from '../api/book';
+import { IChapter, getChapters, getChapter, IBook } from '../api/book';
 import ReadPager from '@/components/ReadPager.vue'
 import BackHeader from '@/components/BackHeader.vue';
-import {Range} from 'mint-ui';
+import {Range, MessageBox, Toast} from 'mint-ui';
+import { getLocalStorage } from '@/utils';
+import BookRecord from '@/utils/book';
 
 Vue.component(Range.name, Range);
 
@@ -87,12 +89,13 @@ export default class Read extends Vue {
     height: number = window.innerHeight;
     progress: number = 0;
     chapter?: IChapter;
+    book?: IBook;
     readMode: number = 0;
     
     created() {
         getChapter(parseInt(this.$route.params.id)).then(res => {
             this.chapter = res;
-        }); 
+        });
     }
 
     mounted () {
@@ -112,6 +115,25 @@ export default class Read extends Vue {
 
     tapChapter() {
 
+    }
+
+     beforeRouteLeave(to: any, from: any, next: Function) {
+        if (!this.chapter) {
+            next();
+            return;
+        }
+        if (!BookRecord.has(this.chapter.book_id)) {
+            MessageBox.confirm('是否将小说加入书架？').then(() => {
+                //this.recordReadHis()
+                Toast('添加成功！')
+                next()
+            }, () => {
+                next()
+            })
+            return;
+        }
+        //this.recordReadHis()
+        next()
     }
 }
 </script>
