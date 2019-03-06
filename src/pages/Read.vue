@@ -1,7 +1,7 @@
 <template>
     <div>
         <BackHeader v-if="readMode > 0" :title="chapter.title"/>
-        <ReadPager ref="pager"></ReadPager>
+        <ReadPager ref="pager" :width="width" :height="height"></ReadPager>
         <footer v-if="readMode > 0">
             <div class="pager">
                 <a href="">上一章</a>
@@ -85,24 +85,70 @@ Vue.component(Range.name, Range);
 })
 export default class Read extends Vue {
 
-    width: number = window.innerWidth;
-    height: number = window.innerHeight;
+    width: number = 0;
+    height: number = 0;
     progress: number = 0;
     chapter?: IChapter;
     book?: IBook;
     readMode: number = 0;
+    isReady = false;
+    isPagerReady = false;
     
     created() {
         getChapter(parseInt(this.$route.params.id)).then(res => {
             this.chapter = res;
+            this.refreshPager();
         });
     }
 
     mounted () {
+        this.isReady = true;
         window.onresize = () => {
-            this.width = window.innerWidth;
-            this.height = window.innerHeight;
+            this.refreshSize();
         }
+        this.refreshSize();
+        this.refreshPager();
+    }
+
+    refreshSize() {
+        let size = this.getClientSize();
+        this.width = size.width;
+        this.height = size.height;
+    }
+
+    getClientSize() {
+        if(window.innerHeight !== undefined){
+            return {
+                'width': window.innerWidth,
+                'height': window.innerHeight
+            }
+        }
+        if(document.compatMode === "CSS1Compat"){
+            return {
+                'width': document.documentElement.clientWidth,
+                'height': document.documentElement.clientHeight
+            }
+        }
+        return {
+            'width': document.body.clientWidth,
+            'height': document.body.clientHeight
+        }
+    }
+
+    refreshPager(page: number = 1) {
+        if (!this.isReady || this.isPagerReady) {
+            return;
+        }
+        if (!this.chapter) {
+            return;
+        }
+        this.isPagerReady = true;
+        this.$refs.pager.refreshPager(this.chapter.content);
+        this.goPager(page);
+    }
+
+    goPager(page: number) {
+        this.$refs.pager.goPager(page);
     }
 
     tapSetting() {

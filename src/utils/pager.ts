@@ -20,6 +20,9 @@ export class Pager {
      * @param text
      */
     public static getLines(text: string): ILine[] {
+        if (!text || text.length < 1) {
+            return [];
+        }
         const lineChar = 10; // \n
         const lineChar2 = 14; // \r
         const whiteChar = 32; // 空格
@@ -139,8 +142,8 @@ export class Pager {
         page: number, fontSize: number,
         lineSpace: number, letterSpace: number, width: number,
         height: number, left: number = 0, top: number = 0,
-        color: string = '#000', fontFamily: string = '微软雅黑'): void {
-        Pager.toHtmlWithFonts(
+        color: string = '#000', fontFamily: string = '微软雅黑'): string {
+        return Pager.toHtmlWithFonts(
             this.getOnePage(
                 page, fontSize, lineSpace, letterSpace,
                 width, height, left, top),
