@@ -1,12 +1,14 @@
 <template>
     <div>
-        <SearchBar v-show="isSearch" v-model="keywords" @search="tapSearch"></SearchBar>
+        <SearchBar :value="keywords" @input="updateVal" @focus="tapFocusSearch" @search="tapSearch"></SearchBar>
 
-        <div class="box"
-            v-infinite-scroll="loadMore"
-            infinite-scroll-disabled="is_loading"
-            infinite-scroll-distance="10">
-            <BookItem v-for="(item, index) in items" :key="index" :book="item"></BookItem>
+        <div class="has-header" v-show="!isSearch">
+            <div class="box"
+                v-infinite-scroll="loadMore"
+                infinite-scroll-disabled="is_loading"
+                infinite-scroll-distance="10">
+                <BookItem v-for="(item, index) in items" :key="index" :book="item"></BookItem>
+            </div>
         </div>
     </div>
 </template>
@@ -40,12 +42,25 @@ export default class Search extends Vue {
     created() {
         this.isSearch = Object.keys(this.$route.query).length == 0;
         if (!this.isSearch) {
-            
+            this.category = this.$route.query.category;
+            this.author = this.$route.query.author;
+            this.keywords = this.$route.query.keywords;
         }
         // getCategories().then(res => {
         //     this.categories = res.data;
         // });
         this.refresh();
+    }
+
+    tapFocusSearch() {
+        this.isSearch = true;
+    }
+
+    updateVal(val: string) {
+        this.keywords = val;
+        if (!val || val.length < 1) {
+            this.isSearch = true;
+        }
     }
 
     public tapCategory(item: ICategory) {

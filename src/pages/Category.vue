@@ -14,6 +14,7 @@ import { Vue, Component } from 'vue-property-decorator';
 import { ICategory, getCategories } from '../api/book';
 import TabBar from '@/components/TabBar.vue';
 import BackHeader from '@/components/BackHeader.vue';
+import { dispatchCategories } from '@/store/dispatches';
 
 @Component({
   components: {
@@ -25,8 +26,8 @@ export default class Category extends Vue {
     categories?: ICategory[] = [];
     
     created() {
-        getCategories().then(res => {
-            this.categories = res.data;
+        dispatchCategories().then(res => {
+            this.categories = res;
         });
     }
 

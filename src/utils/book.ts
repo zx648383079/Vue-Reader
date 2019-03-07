@@ -45,6 +45,14 @@ class Book {
     }
 
     /**
+     * 获取
+     * @param id
+     */
+    public getItem(id: number): IBookRecord | undefined {
+        return this.has(id) ? this.get()[id] : undefined;
+    }
+
+    /**
      * remove
      */
     public remove(id: number) {

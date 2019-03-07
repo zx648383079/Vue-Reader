@@ -50,6 +50,7 @@ export interface IBook {
     category?: ICategory,
     author?: IAuthor,
     last_chapter?: IChapter,
+    first_chapter?: IChapter,
 }
 
 export interface IChapter {

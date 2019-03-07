@@ -23,6 +23,7 @@
 import { Vue, Component } from 'vue-property-decorator';
 import { IChapter, getChapters } from '../api/book';
 import BackHeader from '@/components/BackHeader.vue';
+import { dispatchChapters } from '@/store/dispatches';
 
 @Component({
     components: {
@@ -34,8 +35,8 @@ export default class Chapter extends Vue {
     isSort: boolean = false;
 
     created() {
-        getChapters(parseInt(this.$route.params.book)).then(res => {
-            this.items = res.data;
+        dispatchChapters(parseInt(this.$route.params.book)).then(res => {
+            this.items = res;
         });
     }
 

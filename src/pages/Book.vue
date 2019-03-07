@@ -27,29 +27,29 @@
                 <span>点击</span>
             </a>
             <a href="">
-                <span>{{ book.click_count|size }}</span>
-                <span>点击</span>
+                <span>{{ book.chapter_count|size }}</span>
+                <span>章节</span>
             </a>
         </div>
 
         <div class="line-item" @click="tapChapter">
             <span>目录</span>
             <div class="right">
-                <span>连载至</span>
+                <span v-if="book.last_chapter">连载至{{ book.last_chapter.title.substr(0, 10) }}</span>
                 <i class="fa fa-chevron-right"></i>
             </div>
         </div>
 
         <footer>
-            <a href="" v-if="!isFollow">
+            <a v-if="!isFollow" @click="tapFollow">
                 <i class="fa fa-plus"></i>
                 加入书架
             </a>
-            <a v-else>
+            <a class="followed" v-else>
                 <i class="fa fa-check"></i>
                 已在书架
             </a>
-            <a href="">
+            <a @click="tapRead">
                 立即阅读
             </a>
         </footer>
@@ -58,8 +58,9 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
 import { IBook, getBook } from '../api/book';
-import {Cell} from 'mint-ui';
+import {Cell, Toast} from 'mint-ui';
 import BookRecord from '@/utils/book';
+import { dispatchBook } from '@/store/dispatches';
 
 Vue.component(Cell.name, Cell);
 
@@ -73,9 +74,17 @@ export default class Book extends Vue {
             id: parseInt(this.$route.params.id)
         };
         this.isFollow = BookRecord.has(this.book.id);
-        getBook(this.book.id).then(res => {
-            this.book = res
+        dispatchBook(this.book.id).then(res => {
+            if (!res) {
+                Toast('书籍已失联');
+                this.tapBack();
+                return;
+            }
+            this.book = res;
             this.$forceUpdate();
+        }).catch(err => {
+            Toast('书籍已失联');
+            this.tapBack();
         });
     }
 
@@ -92,6 +101,23 @@ export default class Book extends Vue {
             return;
         }
         this.$router.push('/chapter/' + this.book.id);
+    }
+
+    tapRead() {
+        if (!this.book || !this.book.first_chapter) {
+            return;
+        }
+        const record = BookRecord.getItem(this.book.id);
+        this.$router.push('/read/' + (record ? record.chapter_id : this.book.first_chapter.id));
+    }
+
+    tapFollow() {
+        if (!this.book || !this.book.first_chapter) {
+            return;
+        }
+        BookRecord.add(this.book, this.book.first_chapter, 0);
+        this.isFollow = true;
+        Toast('已成功加入书架');
     }
 }
 </script>
@@ -187,7 +213,11 @@ footer {
             background-color: #f00;
             color: #fff;
         }
+        &.followed {
+            color: #767676;
+        }
     }
+    
 }
 </style>
 

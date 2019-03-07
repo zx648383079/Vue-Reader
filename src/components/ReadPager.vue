@@ -143,7 +143,7 @@ export default Vue.extend({
                 });
                 return;
             }
-            this.animation(this.$refs.prevPage, diff, 0, () => {
+            this.animation(this.$refs.prevPage, diff - this.width, 0, () => {
                 this.applyPrev();
             });
         },
@@ -152,9 +152,9 @@ export default Vue.extend({
          */
         readyPage() {
             if (this.isToRight()) {
-                return this.readyPrev();
+                return this.readyNext();
             }
-            return this.readyNext();
+            return this.readyPrev();
         },
         /**
          * 准备上一页的内容
@@ -162,6 +162,7 @@ export default Vue.extend({
         readyPrev() {
             if (this.page < 2) {
                 this.isRight = 3;
+                this.$emit('prev');
                 return false;
             }
             this.applyPage(this.$refs.prevPage, this.page - 1);
@@ -172,6 +173,7 @@ export default Vue.extend({
          */
         readyNext() {
             if (this.page >= this.pageCount) {
+                this.$emit('next');
                 return false;
             }
             this.applyPage(this.$refs.nextPage, this.page + 1);

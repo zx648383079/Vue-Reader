@@ -48,5 +48,49 @@ export default class Home extends Vue {
     margin-top: 30vh;
     text-align: center;
 }
+.book-item {
+    position: relative;
+    height: 130px;
+    overflow: hidden;
+    background-color: #fff;
+    padding: 10px;
+    .cover {
+        position: absolute;
+        img {
+            width: 85px;
+            height: 110px;
+        }
+        .tip {
+            position: absolute;
+            bottom: 20px;
+            text-align: center;
+            color: #fff;
+            width: 100%;
+            font-size: 12px;
+        }
+    }
+    .info {
+        margin-left: 90px;
+        .name {
+            font-weight: 700;
+            line-height: 30px;
+        }
+        .tag {
+            color: #767676;
+            line-height: 20px;
+            font-size: 13px;
+        }
+        .desc {
+            height: 60px;
+            overflow: hidden;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            line-height: 20px;
+        }
+    }
+    &:not(:last-of-type) {
+        border-bottom: 1px solid #f4f4f4;
+    }
+}
 </style>
 

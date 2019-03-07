@@ -1,7 +1,7 @@
 <template>
     <div>
-        <SearchHeader :value="value" @input="updateVal" @enter="tapSearch" @keyup="onKeyUp"></SearchHeader>
-        <div class="has-header">
+        <SearchHeader :value="value" @input="updateVal" @enter="tapSearch" @keyup="onKeyUp" @focus="tapFocus"></SearchHeader>
+        <div class="has-header" v-if="!isMini">
             <div class="search-recommend-box" v-if="!tip_list || tip_list.length == 0">
                 <div class="panel" v-if="history_list && history_list.length > 0">
                     <div class="panel-header">
@@ -34,7 +34,7 @@
 import { removeLocalStorage, getLocalStorage, setLocalStorage } from '@/utils';
 import { getTips, getHot } from '@/api/book';
 const KEYWORDS_HISTORY = 'KEYWORDS_HISTORY';
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
 import SearchHeader from './SearchHeader.vue';
 
 @Component({
@@ -48,8 +48,10 @@ export default class SearchBar extends Vue {
     hot_keywords?: string[] = [];
     tip_list?: string[] = [];
     history_list: string[] = [];
+    isMini: boolean = false;
 
     created() {
+        this.isMini = Object.keys(this.$route.query).length > 0;
         this.history_list = getLocalStorage<string[]>(KEYWORDS_HISTORY, true) || []
         getHot().then(res => {
             this.hot_keywords = res.data
@@ -58,7 +60,11 @@ export default class SearchBar extends Vue {
 
 
     updateVal(val: string) {
-        this.$emit('input', val);  
+        this.$emit('input', val);
+        if (!val || val.length < 1) {
+            this.tip_list = [];
+            this.isMini = false;
+        }
     }
 
     tapClearHistory() {
@@ -78,7 +84,7 @@ export default class SearchBar extends Vue {
     }
 
     onKeyUp(event: any) {
-        if (!this.value || this.value.trim().length === 0) {
+        if (!this.value || this.value.length < 1) {
             this.tip_list = [];
             return;
         }
@@ -93,6 +99,12 @@ export default class SearchBar extends Vue {
         }
         this.addHistory(keywords);
         this.$emit('search', keywords);
+        this.isMini = true;
+    }
+
+    @Emit('focus')
+    tapFocus() {
+        this.isMini = false;
     }
 }
 </script>

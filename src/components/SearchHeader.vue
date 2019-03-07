@@ -4,7 +4,7 @@
             <div class="search-input">
                 <i class="fa fa-search" aria-hidden="true" @click="tapSearch"></i>
                 <input type="text" :value="value"
-                @input="updateVal($event.target.value)" @keyup="onKeyUp" placeholder="搜索" autocomplete="off">
+                @input="updateVal($event.target.value)" @keyup="onKeyUp" placeholder="搜索" @click="tapFocus" autocomplete="off">
                 <i class="fa fa-times-circle" v-if="currrent && currrent.length > 0" @click="tapClear"></i>
             </div>
             <a class="cancel-btn" @click="tapBack">取消</a>
@@ -22,6 +22,10 @@ export default Vue.extend({
     props: ['value'],
     methods: {
         tapBack() {
+            if (this.value && this.value.length > 0) {
+                this.tapClear();
+                return;
+            }
             if (window.history.length <= 1) {
                 this.$router.push('/');
                 return;
@@ -47,6 +51,9 @@ export default Vue.extend({
         },
         tapSearch() {
             this.$emit('enter', this.value);
+        },
+        tapFocus() {
+            this.$emit('focus');
         }
     }
 })

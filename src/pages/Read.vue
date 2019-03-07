@@ -1,12 +1,12 @@
 <template>
     <div>
         <BackHeader v-if="readMode > 0" :title="chapter.title"/>
-        <ReadPager ref="pager" :width="width" :height="height" :fontSize="configs.size" :lineSpace="configs.line" :letterSpace="configs.letter" :font="'font-' + configs.font" :theme="'theme-' + configs.theme"  @middle="tapMiddle" @progress="tapProgress"></ReadPager>
+        <ReadPager ref="pager" :width="width" :height="height" :fontSize="configs.size" :lineSpace="configs.line" :letterSpace="configs.letter" :font="'font-' + configs.font" :theme="'theme-' + configs.theme"  @middle="tapMiddle" @progress="tapProgress" @prev="tapPrev" @next="tapNext"></ReadPager>
         <footer v-if="readMode > 0">
             <div class="pager">
-                <a href="">上一章</a>
+                <a @click="tapPrev">上一章</a>
                 <mt-range :value="progress" @input="tapMoveProgress"></mt-range>
-                <a href="">下一章</a>
+                <a @click="tapNext">下一章</a>
             </div>
             <div class="setting" v-if="readMode == 2">
                 <div class="theme-box">
@@ -58,13 +58,15 @@
     </div>
 </template>
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { Vue } from 'vue-property-decorator';
+import Component from 'vue-class-component';
 import { IChapter, getChapters, getChapter, IBook } from '../api/book';
 import ReadPager from '@/components/ReadPager.vue'
 import BackHeader from '@/components/BackHeader.vue';
-import {Range, MessageBox, Toast} from 'mint-ui';
+import {Range, MessageBox, Toast, Indicator} from 'mint-ui';
 import { getLocalStorage } from '@/utils';
 import BookRecord from '@/utils/book';
+import { dispatchChapter, dispatchBook } from '@/store/dispatches';
 
 interface IProgress {
     page: number,
@@ -73,6 +75,10 @@ interface IProgress {
 }
 
 Vue.component(Range.name, Range);
+
+Component.registerHooks([
+  'beforeRouteLeave'
+]);
 
 @Component({
     components: {
@@ -105,9 +111,28 @@ export default class Read extends Vue {
         line: [2, 1, 40],
         letter: [1, 1, 40],
     };
+
+    beforeRouteLeave(to: any, from: any, next: Function) {
+        if (!this.chapter) {
+            next();
+            return;
+        }
+        if (!BookRecord.has(this.chapter.book_id)) {
+            MessageBox.confirm('是否将小说加入书架？').then(() => {
+                this.recordFollow();
+                Toast('添加成功！')
+                next()
+            }, () => {
+                next()
+            })
+            return;
+        }
+        this.recordFollow();
+        next()
+    }
     
     created() {
-        getChapter(parseInt(this.$route.params.id)).then(res => {
+        dispatchChapter(parseInt(this.$route.params.id)).then(res => {
             this.chapter = res;
             this.refreshPager();
         });
@@ -120,6 +145,15 @@ export default class Read extends Vue {
         }
         this.refreshSize();
         this.refreshPager();
+    }
+
+    recordFollow() {
+        if (!this.chapter) {
+            return;
+        }
+        dispatchBook(this.chapter.book_id).then(book => {
+            BookRecord.add(book, this.chapter, this.progress);
+        })
     }
 
     refreshSize() {
@@ -157,6 +191,34 @@ export default class Read extends Vue {
         this.isPagerReady = true;
         this.$refs.pager.refreshPager(this.chapter.content);
         this.goPager(page);
+    }
+
+    tapPrev() {
+        if (!this.chapter || !this.chapter.previous) {
+            Toast('已到第一章节，无法前进了');
+            return;
+        }
+        Indicator.open('获取《' + this.chapter.previous.title + '》中');
+        getChapter(this.chapter.previous.id).then(res => {
+            Indicator.close();
+            this.chapter = res;
+            this.isPagerReady = false;
+            this.refreshPager();
+        });
+    }
+
+    tapNext() {
+       if (!this.chapter || !this.chapter.next) {
+            Toast('已到最新章节，没有更多了');
+            return;
+        }
+        Indicator.open('获取《' + this.chapter.next.title + '》中');
+        getChapter(this.chapter.next.id).then(res => {
+            Indicator.close();
+            this.chapter = res;
+            this.isPagerReady = false;
+            this.refreshPager();
+        });
     }
 
     tapProgress(data: IProgress) {
@@ -218,25 +280,6 @@ export default class Read extends Vue {
 
     tapChapter() {
 
-    }
-
-     beforeRouteLeave(to: any, from: any, next: Function) {
-        if (!this.chapter) {
-            next();
-            return;
-        }
-        if (!BookRecord.has(this.chapter.book_id)) {
-            MessageBox.confirm('是否将小说加入书架？').then(() => {
-                //this.recordReadHis()
-                Toast('添加成功！')
-                next()
-            }, () => {
-                next()
-            })
-            return;
-        }
-        //this.recordReadHis()
-        next()
     }
 }
 </script>
