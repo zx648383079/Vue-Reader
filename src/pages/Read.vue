@@ -189,6 +189,7 @@ export default class Read extends Vue {
             return;
         }
         this.isPagerReady = true;
+        this.$route.meta.title = this.chapter.title;
         this.$refs.pager.refreshPager(this.chapter.content);
         this.goPager(page);
     }

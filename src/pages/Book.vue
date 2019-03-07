@@ -81,6 +81,7 @@ export default class Book extends Vue {
                 return;
             }
             this.book = res;
+            this.$route.meta.title = res.name;
             this.$forceUpdate();
         }).catch(err => {
             Toast('书籍已失联');
