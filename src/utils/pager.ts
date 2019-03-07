@@ -91,9 +91,11 @@ export class Pager {
     public static toHtmlWithFonts(fonts: IFont[], font: string, color: string = '#000'): string {
         let html = '';
         for (const item of fonts) {
+            // html += '<span style="position: absolute;top: '
+            //     + item.y + 'px;left: ' + item.x + 'px;font: '
+            //     + font + ';color: ' + color + ';">' + item.code + '</span>';
             html += '<span style="position: absolute;top: '
-                + item.y + 'px;left: ' + item.x + 'px;font: '
-                + font + ';color: ' + color + ';">' + item.code + '</span>';
+                + item.y + 'px;left: ' + item.x + 'px;">' + item.code + '</span>';
         }
         return '<div style="position: relative;">' + html + '</div>';
     }
@@ -198,6 +200,24 @@ export class Pager {
             count += Pager.toLineCount(item, lineLength);
         }
         return Math.ceil(count / lineCount);
+    }
+
+    /**
+     * 
+     * @param fontSize
+     * @param lineSpace
+     * @param letterSpace
+     * @param width
+     * @param height
+     */
+    public getPageCountWithSize(
+        fontSize: number, lineSpace: number,
+        letterSpace: number, width: number, height: number): number {
+        const fontWidth = fontSize + letterSpace;
+        const fontHeight = fontSize + lineSpace;
+        const lineLength = Math.floor(width / fontWidth);
+        const lineCount = Math.floor(height / fontHeight);
+        return this.getPageCount(lineLength, lineCount);
     }
 
     /**

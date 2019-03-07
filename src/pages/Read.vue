@@ -1,51 +1,42 @@
 <template>
     <div>
         <BackHeader v-if="readMode > 0" :title="chapter.title"/>
-        <ReadPager ref="pager" :width="width" :height="height"></ReadPager>
+        <ReadPager ref="pager" :width="width" :height="height" :fontSize="configs.size" :lineSpace="configs.line" :letterSpace="configs.letter" :font="'font-' + configs.font" :theme="'theme-' + configs.theme"  @middle="tapMiddle" @progress="tapProgress"></ReadPager>
         <footer v-if="readMode > 0">
             <div class="pager">
                 <a href="">上一章</a>
-                <mt-range v-model="progress"></mt-range>
+                <mt-range :value="progress" @input="tapMoveProgress"></mt-range>
                 <a href="">下一章</a>
             </div>
             <div class="setting" v-if="readMode == 2">
                 <div class="theme-box">
-                    <span class="theme-0 active"></span>
-                    <span class="theme-1"></span>
-                    <span class="theme-2"></span>
-                    <span class="theme-3"></span>
-                    <span class="theme-4"></span>
-                    <span class="theme-5"></span>
-                    <span class="theme-6"></span>
+                    <span v-for="(item, index) in theme_list" :key="index" :class="['theme-' + index, configs.theme == index ? 'active' : '']" @click="configs.theme = index"></span>
                 </div>
                 <div class="font-box">
-                    <span>雅黑</span>
-                    <span>宋体</span>
-                    <span>楷书</span>
-                    <span class="active">启体</span>
+                    <span v-for="(item, index) in font_list" :key="index" :class="[configs.font == index ? 'active' : '']" @click="configs.font = index">{{ item }}</span>
                 </div>
                 <div class="line-item">
                     <span>字体大小</span>
                     <div class="size-box">
-                        <i class="fa fa-minus"></i>
-                        <span class="lang">18</span>
-                        <i class="fa fa-plus"></i>
+                        <i class="fa fa-minus" @click="tapMinus('size')"></i>
+                        <span class="lang">{{ configs.size }}</span>
+                        <i class="fa fa-plus" @click="tapPlus('size')"></i>
                     </div>
                 </div>
                 <div class="line-item">
                     <span>行距</span>
                     <div class="size-box">
-                        <i class="fa fa-minus"></i>
-                        <span class="lang">10</span>
-                        <i class="fa fa-plus"></i>
+                        <i class="fa fa-minus" @click="tapMinus('line')"></i>
+                        <span class="lang">{{ configs.line }}</span>
+                        <i class="fa fa-plus" @click="tapPlus('line')"></i>
                     </div>
                 </div>
                 <div class="line-item">
                     <span>间距</span>
                     <div class="size-box">
-                        <i class="fa fa-minus"></i>
-                        <span class="lang">10</span>
-                        <i class="fa fa-plus"></i>
+                        <i class="fa fa-minus" @click="tapMinus('letter')"></i>
+                        <span class="lang">{{ configs.letter }}</span>
+                        <i class="fa fa-plus" @click="tapPlus('letter')"></i>
                     </div>
                 </div>
             </div>
@@ -54,9 +45,9 @@
                     <i class="fa fa-bars"></i>
                     目录
                 </a>
-                <a @click="tapEye" :class="readMode == 3 ? 'active' : ''">
+                <a @click="tapEye" :class="configs.theme == 7 ? 'active' : ''">
                     <i class="fa fa-eye"></i>
-                    护眼
+                    夜间
                 </a>
                 <a @click="tapSetting"  :class="readMode == 2 ? 'active' : ''">
                     <i class="fa fa-cog"></i>
@@ -74,6 +65,12 @@ import BackHeader from '@/components/BackHeader.vue';
 import {Range, MessageBox, Toast} from 'mint-ui';
 import { getLocalStorage } from '@/utils';
 import BookRecord from '@/utils/book';
+
+interface IProgress {
+    page: number,
+    count: number,
+    progress: number
+}
 
 Vue.component(Range.name, Range);
 
@@ -93,6 +90,21 @@ export default class Read extends Vue {
     readMode: number = 0;
     isReady = false;
     isPagerReady = false;
+    theme_list = [0, 1, 2, 3, 4, 5];
+    font_list = ['雅黑', '宋体', '楷书', '启体'];
+    configs = {
+        font: 3,
+        theme: 0,
+        old_theme: 0, // 记录夜间模式切换
+        size: 18,
+        line: 10,
+        letter: 4
+    };
+    size_round =  {
+        size: [12, 2, 40],
+        line: [2, 1, 40],
+        letter: [1, 1, 40],
+    };
     
     created() {
         getChapter(parseInt(this.$route.params.id)).then(res => {
@@ -147,8 +159,27 @@ export default class Read extends Vue {
         this.goPager(page);
     }
 
+    tapProgress(data: IProgress) {
+        this.progress = data.progress;
+    }
+
     goPager(page: number) {
         this.$refs.pager.goPager(page);
+    }
+
+    tapMoveProgress(val: number) {
+        this.progress = val;
+        this.$refs.pager.goProgress(val)
+    }
+
+    tapMiddle(toggle?: boolean) {
+        if (typeof toggle == 'undefined') {
+            this.readMode = this.readMode > 0 ? 0 : 1;
+            return;
+        }
+        if (this.readMode > 0) {
+            this.readMode = 0;
+        }
     }
 
     tapSetting() {
@@ -156,7 +187,33 @@ export default class Read extends Vue {
     }
 
     tapEye() {
-        this.readMode = 3;
+        if (this.configs.theme == 7) {
+            this.configs.theme = this.configs.old_theme;
+            return;
+        }
+        this.configs.old_theme = this.configs.theme;
+        this.configs.theme = 7;
+    }
+
+    tapMinus(name: string) {
+        if (!this.configs.hasOwnProperty(name)) {
+            return;
+        }
+        const round = {
+            size: [12, 2, 40],
+            line: [2, 1, 40],
+            letter: [1, 1, 40],
+        };
+        this.configs[name] = Math.min(Math.max(this.configs[name] - this.size_round[name][1], this.size_round[name][0]), this.size_round[name][2]);
+        this.$refs.pager.refreshPage();
+    }
+
+    tapPlus(name: string) {
+        if (!this.configs.hasOwnProperty(name)) {
+            return;
+        }
+        this.configs[name] = Math.min(Math.max(this.configs[name] + this.size_round[name][1], this.size_round[name][0]), this.size_round[name][2]);
+        this.$refs.pager.refreshPage();
     }
 
     tapChapter() {
@@ -188,6 +245,7 @@ footer {
     position: fixed;
     bottom: 0;
     width: 100%;
+    z-index: 99;
     background-color: #333;
     color: #fff;
     a {
@@ -270,59 +328,47 @@ footer {
         }
     }
 }
+</style>
+
+<style lang="scss">
 .theme-0 {
     background: #ede7da;
-    .chapte-box,
-    .chapter-sidebar,
-    #setting-box {
-        background: #f8f3e9;
-    }
 }
 
 .theme-1 {
     background: #e0ce9e;
-    .chapte-box,
-    .chapter-sidebar,
-    #setting-box {
-        background: #f3e9c6;
-    }
 }
 
 .theme-2 {
     background: #cddfcd;
-    .chapte-box,
-    .chapter-sidebar,
-    #setting-box {
-        background: #e2eee2;
-    }
 }
 
 .theme-3 {
     background: #cfdde1;
-    .chapte-box,
-    .chapter-sidebar,
-    #setting-box {
-        background: #e2eff3;
-    }
 }
 
 .theme-4 {
     background: #ebcece;
-    .chapte-box,
-    .chapter-sidebar,
-    #setting-box {
-        background: #f5e4e4;
-    }
 }
 
 .theme-5 {
     background: #d0d0d0;
-    .chapte-box,
-    .chapter-sidebar,
-    #setting-box {
-        background: #dcdcdc;
-    }
 }
-
+.theme-7 {
+    background: #000;
+    color: #fff;
+}
+.font-0 {
+    font-family: 'Microsoft YaHei',PingFangSC-Regular,HelveticaNeue-Light,'Helvetica Neue Light',sans-serif;
+}
+.font-1 {
+    font-family: PingFangSC-Regular,'-apple-system',Simsun;
+}
+.font-2 {
+    font-family: Kaiti;
+}
+.font-3 {
+    font-family: 方正启体简体,"Microsoft YaHei",微软雅黑,宋体;
+}
 </style>
 
