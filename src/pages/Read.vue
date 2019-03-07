@@ -55,6 +55,7 @@
                 </a>
             </div>
         </footer>
+        <SliderMenu v-if="chapter" v-show="readMode == 4" :book="chapter.book_id" :chapter="chapter.id" @read="tapRead"></SliderMenu>
     </div>
 </template>
 <script lang="ts">
@@ -63,6 +64,7 @@ import Component from 'vue-class-component';
 import { IChapter, getChapters, getChapter, IBook } from '../api/book';
 import ReadPager from '@/components/ReadPager.vue'
 import BackHeader from '@/components/BackHeader.vue';
+import SliderMenu from '@/components/SliderMenu.vue';
 import {Range, MessageBox, Toast, Indicator} from 'mint-ui';
 import { getLocalStorage } from '@/utils';
 import BookRecord from '@/utils/book';
@@ -83,7 +85,8 @@ Component.registerHooks([
 @Component({
     components: {
         ReadPager,
-        BackHeader
+        BackHeader,
+        SliderMenu
     },
 })
 export default class Read extends Vue {
@@ -208,6 +211,17 @@ export default class Read extends Vue {
         });
     }
 
+    tapRead(item: IChapter) {
+        this.chapter = item;
+        Indicator.open('获取《' + item.title + '》中');
+        getChapter(item.id).then(res => {
+            Indicator.close();
+            this.chapter = res;
+            this.isPagerReady = false;
+            this.refreshPager();
+        });
+    }
+
     tapNext() {
        if (!this.chapter || !this.chapter.next) {
             Toast('已到最新章节，没有更多了');
@@ -280,7 +294,7 @@ export default class Read extends Vue {
     }
 
     tapChapter() {
-
+        this.readMode = 4;
     }
 }
 </script>

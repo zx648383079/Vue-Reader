@@ -6,6 +6,7 @@ import Search from '@/pages/Search.vue'
 import Book from '@/pages/Book.vue'
 import Chapter from '@/pages/Chapter.vue'
 import Read from '@/pages/Read.vue'
+import Bang from '@/pages/Bang.vue'
 
 Vue.use(Router)
 
@@ -25,6 +26,14 @@ export default new Router({
             component: Category,
             meta: {
                 title: '分类',
+            },
+        },
+        {
+            path: '/bang',
+            name: 'bang',
+            component: Bang,
+            meta: {
+                title: '分类榜单',
             },
         },
         {

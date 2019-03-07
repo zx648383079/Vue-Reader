@@ -33,7 +33,7 @@ export default class Category extends Vue {
 
     tapCategory(item: ICategory) {
         this.$router.push({
-            name: 'search',
+            name: 'bang',
             query: {
                 category: item.id + '', 
                 title: item.name

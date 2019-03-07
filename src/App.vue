@@ -1,5 +1,5 @@
 <template>
-    <div id="app">
+    <div id="app" v-zo-title="$route.meta.title">
         <keep-alive>
             <router-view v-if="$route.meta.keepAlive"></router-view>
         </keep-alive>
