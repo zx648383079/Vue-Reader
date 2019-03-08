@@ -12,7 +12,7 @@
         </BackHeader>
 
         <div class="box">
-            <div class="item" v-for="item in items" :key="item.id" @click="tapChapter(item)">
+            <div v-for="item in items" :key="item.id" @click="tapChapter(item)" :class="['item', activeChapter == item.id ? 'active' : '']">
                 <div class="title">{{ item.title }}</div>
                 <div class="time">{{ item.created_at }}</div>
             </div>
@@ -24,6 +24,7 @@ import { Vue, Component } from 'vue-property-decorator';
 import { IChapter, getChapters } from '../api/book';
 import BackHeader from '@/components/BackHeader.vue';
 import { dispatchChapters } from '@/store/dispatches';
+import BookRecord from '@/utils/book';
 
 @Component({
     components: {
@@ -33,11 +34,20 @@ import { dispatchChapters } from '@/store/dispatches';
 export default class Chapter extends Vue {
     items?: IChapter[] = [];
     isSort: boolean = false;
+    activeChapter: number = 0;
 
     created() {
-        dispatchChapters(parseInt(this.$route.params.book)).then(res => {
+        const book_id = parseInt(this.$route.params.book);
+        if (!book_id) {
+            return;
+        }
+        dispatchChapters(book_id).then(res => {
             this.items = res;
         });
+        const record = BookRecord.getItem(book_id);
+        if (record) {
+            this.activeChapter = record.chapter_id;
+        }
     }
 
     tapChapter(item: IChapter) {

@@ -1,7 +1,7 @@
 <template>
     <div>
         <BackHeader v-if="readMode > 0" :title="chapter.title"/>
-        <ReadPager ref="pager" :width="width" :height="height" :fontSize="configs.size" :lineSpace="configs.line" :letterSpace="configs.letter" :font="'font-' + configs.font" :theme="'theme-' + configs.theme"  @middle="tapMiddle" @progress="tapProgress" @prev="tapPrev" @next="tapNext"></ReadPager>
+        <ReadPager ref="pager" :width="width" :height="height" :fontsize="configs.size" :linespace="configs.line" :letterspace="configs.letter" :font="'font-' + configs.font" :theme="'theme-' + configs.theme"  @middle="tapMiddle" @progress="tapProgress" @prev="tapPrev" @next="tapNext"></ReadPager>
         <footer v-if="readMode > 0">
             <div class="pager">
                 <a @click="tapPrev">上一章</a>
@@ -55,11 +55,12 @@
                 </a>
             </div>
         </footer>
-        <SliderMenu v-if="chapter" v-show="readMode == 4" :book="chapter.book_id" :chapter="chapter.id" @read="tapRead"></SliderMenu>
+        <SliderMenu ref="slider" v-show="readMode == 4" :chapter="chapter.id" @read="tapRead"></SliderMenu>
+        <div class="dialog-mask" v-if="readMode == 4" @click="readMode = 0"></div>
     </div>
 </template>
 <script lang="ts">
-import { Vue } from 'vue-property-decorator';
+import { Vue, Watch } from 'vue-property-decorator';
 import Component from 'vue-class-component';
 import { IChapter, getChapters, getChapter, IBook } from '../api/book';
 import ReadPager from '@/components/ReadPager.vue'
@@ -67,8 +68,10 @@ import BackHeader from '@/components/BackHeader.vue';
 import SliderMenu from '@/components/SliderMenu.vue';
 import {Range, MessageBox, Toast, Indicator} from 'mint-ui';
 import { getLocalStorage } from '@/utils';
-import BookRecord from '@/utils/book';
+import BookRecord,{ ITheme } from '@/utils/book';
 import { dispatchChapter, dispatchBook } from '@/store/dispatches';
+import { constants } from 'fs';
+import { THEME_CONFIGS_KEY } from '@/store/types';
 
 interface IProgress {
     page: number,
@@ -94,14 +97,14 @@ export default class Read extends Vue {
     width: number = 0;
     height: number = 0;
     progress: number = 0;
-    chapter?: IChapter;
+    chapter?: IChapter = {id: 0};
     book?: IBook;
     readMode: number = 0;
     isReady = false;
     isPagerReady = false;
     theme_list = [0, 1, 2, 3, 4, 5];
     font_list = ['雅黑', '宋体', '楷书', '启体'];
-    configs = {
+    configs: ITheme = {
         font: 3,
         theme: 0,
         old_theme: 0, // 记录夜间模式切换
@@ -138,7 +141,9 @@ export default class Read extends Vue {
         dispatchChapter(parseInt(this.$route.params.id)).then(res => {
             this.chapter = res;
             this.refreshPager();
+            this.$refs.slider.refresh(res.book_id);
         });
+        this.configs = BookRecord.getTheme();
     }
 
     mounted () {
@@ -152,6 +157,10 @@ export default class Read extends Vue {
 
     recordFollow() {
         if (!this.chapter) {
+            return;
+        }
+        if (BookRecord.has(this.chapter.book_id)) {
+            BookRecord.update(this.chapter, this.progress);
             return;
         }
         dispatchBook(this.chapter.book_id).then(book => {
@@ -188,7 +197,7 @@ export default class Read extends Vue {
         if (!this.isReady || this.isPagerReady) {
             return;
         }
-        if (!this.chapter) {
+        if (!this.chapter || this.chapter.id < 1) {
             return;
         }
         this.isPagerReady = true;
@@ -212,6 +221,10 @@ export default class Read extends Vue {
     }
 
     tapRead(item: IChapter) {
+        this.readMode = 0;
+        if (this.chapter && item.id == this.chapter.id) {
+            return;
+        }
         this.chapter = item;
         Indicator.open('获取《' + item.title + '》中');
         getChapter(item.id).then(res => {
@@ -291,6 +304,11 @@ export default class Read extends Vue {
         }
         this.configs[name] = Math.min(Math.max(this.configs[name] + this.size_round[name][1], this.size_round[name][0]), this.size_round[name][2]);
         this.$refs.pager.refreshPage();
+    }
+
+    @Watch('configs', {deep: true})
+    onThemeChange(val: ITheme, old: any) {
+        BookRecord.saveTheme(this.configs);
     }
 
     tapChapter() {
@@ -385,6 +403,15 @@ footer {
             }
         }
     }
+}
+.dialog-mask {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    background: rgba(#000, .2);
+    z-index: 980;
 }
 </style>
 

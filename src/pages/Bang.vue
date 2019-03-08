@@ -3,7 +3,7 @@
         <BackHeader :title="title"></BackHeader>
         <div class="has-header">
             <div class="tab-header">
-                <a v-for="(item, index) in tabs" :key="index" :class="activeTab == index ? 'active': ''" @click="tapTab(index)"></a>
+                <a v-for="(item, index) in tabs" :key="index" :class="activeTab == index ? 'active': ''" @click="tapTab(index)">{{ item.name }}</a>
             </div>
             <div class="box"
                 v-infinite-scroll="loadMore"
@@ -37,11 +37,11 @@ export default class Bang extends Vue {
         },
         {
             name: '月榜',
-            key: 'all'
+            key: 'month'
         },
         {
             name: '周榜',
-            key: 'all'
+            key: 'week'
         }
     ];
     activeTab: number = 0;
@@ -84,7 +84,7 @@ export default class Bang extends Vue {
         this.is_loading = true;
         getBookList({
             category: this.category,
-            top: this.tabs[this.activeTab],
+            top: this.tabs[this.activeTab].key,
             page,
         }).then(res => {
             this.has_more = res.paging.more;
@@ -96,4 +96,29 @@ export default class Bang extends Vue {
     }
 }
 </script>
+<style lang="scss" scoped>
+.tab-header {
+    display: flex;
+    justify-content: space-around;
+    flex-flow: row nowrap;
+    line-height: 3rem;
+    height: 3rem;
+    position: static;
+    background: #f04e49;
+    border: none;
+    color: #fff;
+    font-weight: 300;
+    padding-bottom: 5px;
+    a {
+        // display: block;
+        // width: 33.33%;
+        text-align: center;
+        &.active {
+            border-bottom: 5px solid #fff;
+            font-weight: 700;
+        }
+    }
+}
+</style>
+
 

@@ -55,10 +55,10 @@ export interface IBook {
 
 export interface IChapter {
     id: number,
-    title: string,
-    size: number,
+    title?: string,
+    size?: number,
     content?: string,
-    book_id: number,
+    book_id?: number,
     previous?: IChapter,
     next?: IChapter,
 }

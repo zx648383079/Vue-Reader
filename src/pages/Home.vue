@@ -72,7 +72,9 @@ export default class Home extends Vue {
     deleteItem(e: any){
         let index = e.currentTarget.dataset.index;
         this.activeSwiper = -1;
+        const item = this.items[index];
         this.items.splice(index, 1);
+        Book.remove(item.id);
     }
 }
 </script>

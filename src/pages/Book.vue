@@ -126,7 +126,7 @@ export default class Book extends Vue {
 header {
     position: relative;
     text-align: center;
-    background-color: rgba(255, 0, 0, .2);
+    background-color: rgba(98, 76, 78, .9);
     height: 200px;
     padding: 10px;
     color: #fff;
@@ -134,6 +134,7 @@ header {
     .more {
         position: absolute;
         top: 10px;
+        color: #fff;
     }
     .back {
         left: 20px;

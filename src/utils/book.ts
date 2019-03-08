@@ -1,6 +1,6 @@
 import { IChapter, IBook } from '@/api/book';
 import { getLocalStorage, setLocalStorage } from '.';
-import { FOLLOW_BOOK } from '@/store/types';
+import { FOLLOW_BOOK, THEME_CONFIGS_KEY } from '@/store/types';
 
 export interface IBookRecord extends IBook {
     author_name: string,
@@ -8,6 +8,15 @@ export interface IBookRecord extends IBook {
     chapter_id: number;
     chapter_title: string,
     process: number
+}
+
+export interface ITheme {
+    font?: number,
+    theme?: number,
+    old_theme?: number, // 记录夜间模式切换
+    size?: number,
+    line?: number,
+    letter?: number
 }
 
 interface TBookRecord {
@@ -71,13 +80,47 @@ class Book {
             cover: book.cover,
             author_name: book.author ? book.author.name : '',
             chapter_id: chapter.id,
-            chapter_title: chapter.title,
+            chapter_title: chapter.title + '',
             process,
             read_at: new Date().getTime(),
         };
         const books = this.get();
         books[book.id] = record;
         this.save(books);
+    }
+
+    public update(chapter: IChapter, process: number = 0) {
+        if (!chapter.book_id) {
+            return;
+        }
+        const books = this.get();
+        books[chapter.book_id].chapter_id = chapter.id;
+        books[chapter.book_id].chapter_title = chapter.title + '';
+        books[chapter.book_id].process = process;
+        books[chapter.book_id].read_at = new Date().getTime();
+        this.save(books);
+    }
+
+    /**
+     * getTheme
+     */
+    public getTheme(): ITheme {
+        const theme = getLocalStorage<ITheme>(THEME_CONFIGS_KEY, true);
+        if (theme) {
+            return theme;
+        }
+        return {
+            font: 3,
+            theme: 0,
+            old_theme: 0, // 记录夜间模式切换
+            size: 18,
+            line: 10,
+            letter: 4,
+        };
+    }
+
+    public saveTheme(theme: ITheme) {
+        setLocalStorage(THEME_CONFIGS_KEY, theme);
     }
 }
 

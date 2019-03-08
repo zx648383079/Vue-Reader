@@ -44,7 +44,7 @@ export default class Search extends Vue {
         if (!this.isSearch) {
             this.category = this.$route.query.category;
             this.author = this.$route.query.author;
-            this.keywords = this.$route.query.keywords;
+            this.keywords = this.$route.query.keywords + '';
         }
         // getCategories().then(res => {
         //     this.categories = res.data;

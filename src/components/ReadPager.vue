@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div :class="['pager', font]" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend" :style="{color: color, 'font-size': fontSize + 'px '}">
+        <div :class="['pager', font]" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend" :style="{color: color, 'font-size': fontsize + 'px '}">
             <div ref="prevPage" :class="['prev-page', theme]">
 
             </div>
@@ -37,15 +37,15 @@ export default Vue.extend({
             type: Number,
             default: 0
         },
-        fontSize: {
+        fontsize: {
             type: Number,
             default: 18
         }, 
-        lineSpace: {
+        linespace: {
             type: Number,
             default: 10
         },
-        letterSpace: {
+        letterspace: {
             type: Number,
             default: 4
         },
@@ -65,6 +65,18 @@ export default Vue.extend({
         theme: String
     },
     methods: {
+        getWidth() {
+            if (this.width < 1) {
+                return this.$parent.width;
+            }
+            return this.width;
+        },
+        getHeight() {
+            if (this.height < 1) {
+                return this.$parent.height;
+            }
+            return this.height;
+        },
         isToRight() {
             return this.isRight === 1;
         },
@@ -75,8 +87,8 @@ export default Vue.extend({
             this.pager = new Pager(text);
         },
         tapIfClick(x: number, y: number) {
-            const centerX = this.width / 2;
-            if (Math.abs(centerX  - x) < 50 && Math.abs(this.height / 2 - y) < 50) {
+            const centerX = this.getWidth() / 2;
+            if (Math.abs(centerX  - x) < 50 && Math.abs(this.getHeight() / 2 - y) < 50) {
                 // 点击中间，触发设置
                 this.$emit('middle');
                 return;
@@ -112,7 +124,7 @@ export default Vue.extend({
             ) {
                 return;
             }
-            if (Math.abs(diff) > this.width) {
+            if (Math.abs(diff) > this.getWidth()) {
                 this.isToRight() ? this.applyNext() : this.applyPrev();
                 return;
             }
@@ -120,7 +132,7 @@ export default Vue.extend({
                 this.$refs.currentPage.style.left = diff + 'px';
                 return;
             }
-            this.$refs.prevPage.style.left = diff - this.width + 'px';
+            this.$refs.prevPage.style.left = diff - this.getWidth() + 'px';
         },
         touchend(e: TouchEvent) {
             if (!this.isSilde) {
@@ -138,12 +150,12 @@ export default Vue.extend({
                 return;
             }
             if (this.isToRight()) {
-                this.animation(this.$refs.currentPage, diff, - this.width, () => {
+                this.animation(this.$refs.currentPage, diff, - this.getWidth(), () => {
                     this.applyNext();
                 });
                 return;
             }
-            this.animation(this.$refs.prevPage, diff - this.width, 0, () => {
+            this.animation(this.$refs.prevPage, diff - this.getWidth(), 0, () => {
                 this.applyPrev();
             });
         },
@@ -195,7 +207,7 @@ export default Vue.extend({
         applyPrev() {
             this.page --;
             this.swapHtml(this.$refs.prevPage, this.$refs.currentPage);
-            this.$refs.prevPage.style.left = - this.width * 1.1 +'px';
+            this.$refs.prevPage.style.left = - this.getWidth() * 1.1 +'px';
             this.isRight = 3;
             this.notifyProgress();
         },
@@ -232,21 +244,21 @@ export default Vue.extend({
          * 加载第几页的内容到元素上
          */
         applyPage(element: HTMLDivElement, page: number) {
-            element.innerHTML = this.pager.toHtml(page, this.fontSize, this.lineSpace, this.letterSpace, this.width - 2 * this.left, this.height - 2* this.top, this.left, this.top);
+            element.innerHTML = this.pager.toHtml(page, this.fontsize, this.linespace, this.letterspace, this.getWidth() - 2 * this.left, this.getHeight() - 2* this.top, this.left, this.top);
         },
         /**
          * 更改了其他东西更改内容
          */
         refreshPage() {
             const old_count = this.pageCount;
-            this.pageCount = this.pager.getPageCountWithSize(this.fontSize, this.lineSpace, this.letterSpace, this.width - 2 * this.left, this.height - 2* this.top);
+            this.pageCount = this.pager.getPageCountWithSize(this.fontsize, this.linespace, this.letterspace, this.getWidth() - 2 * this.left, this.getHeight() - 2* this.top);
             if (old_count > 0 && this.pageCount !== old_count) {
                 this.page = Math.floor(this.page * this.pageCount / old_count); // 按比例复原当前页
                 this.notifyProgress();
             }
             if (this.page < 1) {
                 this.page = 1;
-            } else if (this.page > this.pageCount) {
+            } else if (this.pageCount > 0 && this.page > this.pageCount) {
                 this.page = this.pageCount;
             }
             this.applyPage(this.$refs.currentPage, this.page);
@@ -281,7 +293,7 @@ export default Vue.extend({
             if (!this.readyPrev()) {
                 return false;
             }
-            this.animation(this.$refs.prevPage, -this.width, 0, () => {
+            this.animation(this.$refs.prevPage, -this.getWidth(), 0, () => {
                 this.applyPrev();
             });
         },
@@ -292,7 +304,7 @@ export default Vue.extend({
             if (!this.readyNext()) {
                 return false;
             }
-            this.animation(this.$refs.currentPage, 0, - this.width, () => {
+            this.animation(this.$refs.currentPage, 0, - this.getWidth(), () => {
                 this.applyNext();
             });
         }
