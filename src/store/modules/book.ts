@@ -61,7 +61,7 @@ const actions = {
                 return;
             }
             getCategories().then(res => {
-                context.commit(SET_BOOK, res.data);
+                context.commit(SET_CATEGORIES, res.data);
                 resolve(res.data);
             }).catch(reject);
         });
