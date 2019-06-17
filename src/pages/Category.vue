@@ -1,6 +1,6 @@
 <template>
     <div>
-        <BackHeader title="分类"></BackHeader>
+        <BackHeader :title="$route.meta.title"></BackHeader>
         <div class="box">
             <div class="item" v-for="(item, index) in categories" :key="index" @click="tapCategory(item)">
                 {{ item.name }}
@@ -17,27 +17,27 @@ import BackHeader from '@/components/BackHeader.vue';
 import { dispatchCategories } from '@/store/dispatches';
 
 @Component({
-  components: {
-    BackHeader,
-    TabBar,
-  },
+    components: {
+        BackHeader,
+        TabBar,
+    },
 })
 export default class Category extends Vue {
-    categories?: ICategory[] = [];
-    
-    created() {
+    public categories?: ICategory[] = [];
+
+    public created() {
         dispatchCategories().then(res => {
             this.categories = res;
         });
     }
 
-    tapCategory(item: ICategory) {
+    public tapCategory(item: ICategory) {
         this.$router.push({
             name: 'bang',
             query: {
-                category: item.id + '', 
-                title: item.name
-            }
+                category: item.id + '',
+                title: item.name,
+            },
         });
     }
 }

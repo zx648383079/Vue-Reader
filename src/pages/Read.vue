@@ -10,10 +10,10 @@
             </div>
             <div class="setting" v-if="readMode == 2">
                 <div class="theme-box">
-                    <span v-for="(item, index) in theme_list" :key="index" :class="['theme-' + index, configs.theme == index ? 'active' : '']" @click="configs.theme = index"></span>
+                    <span v-for="(item, index) in themeList" :key="index" :class="['theme-' + index, configs.theme == index ? 'active' : '']" @click="configs.theme = index"></span>
                 </div>
                 <div class="font-box">
-                    <span v-for="(item, index) in font_list" :key="index" :class="[configs.font == index ? 'active' : '']" @click="configs.font = index">{{ item }}</span>
+                    <span v-for="(item, index) in fontList" :key="index" :class="[configs.font == index ? 'active' : '']" @click="configs.font = index">{{ item }}</span>
                 </div>
                 <div class="line-item">
                     <span>字体大小</span>
@@ -68,7 +68,7 @@ import BackHeader from '@/components/BackHeader.vue';
 import SliderMenu from '@/components/SliderMenu.vue';
 import {Range, MessageBox, Toast, Indicator} from 'mint-ui';
 import { getLocalStorage } from '@/utils';
-import BookRecord,{ ITheme } from '@/utils/book';
+import BookRecord, { ITheme } from '@/utils/book';
 import { dispatchChapter, dispatchBook } from '@/store/dispatches';
 import { constants } from 'fs';
 import { THEME_CONFIGS_KEY } from '@/store/types';
@@ -76,54 +76,54 @@ import { THEME_CONFIGS_KEY } from '@/store/types';
 interface IProgress {
     page: number,
     count: number,
-    progress: number
+    progress: number,
 }
 
 Vue.component(Range.name, Range);
 
 Component.registerHooks([
-  'beforeRouteLeave'
+  'beforeRouteLeave',
 ]);
 
 @Component({
     components: {
         ReadPager,
         BackHeader,
-        SliderMenu
+        SliderMenu,
     },
 })
 export default class Read extends Vue {
 
-    width: number = 0;
-    height: number = 0;
-    progress: number = 0;
-    chapter?: IChapter = {id: 0};
-    book?: IBook;
-    readMode: number = 0;
-    isReady = false;
-    isPagerReady = false;
-    theme_list = [0, 1, 2, 3, 4, 5];
-    font_list = ['雅黑', '宋体', '楷书', '启体'];
-    configs: ITheme = {
+    public width: number = 0;
+    public height: number = 0;
+    public progress: number = 0;
+    public chapter?: IChapter = {id: 0};
+    public book?: IBook;
+    public readMode: number = 0;
+    public isReady = false;
+    public isPagerReady = false;
+    public themeList = [0, 1, 2, 3, 4, 5];
+    public fontList = ['雅黑', '宋体', '楷书', '启体'];
+    public configs: ITheme = {
         font: 3,
         theme: 0,
-        old_theme: 0, // 记录夜间模式切换
+        oldTheme: 0, // 记录夜间模式切换
         size: 18,
         line: 10,
-        letter: 4
+        letter: 4,
     };
-    size_round =  {
+    public sizeRound =  {
         size: [12, 2, 40],
         line: [2, 1, 40],
         letter: [1, 1, 40],
     };
 
-    beforeRouteLeave(to: any, from: any, next: Function) {
+    public beforeRouteLeave(to: any, from: any, next: () => void) {
         if (!this.chapter) {
             next();
             return;
         }
-        if (!BookRecord.has(this.chapter.book_id)) {
+        if (!BookRecord.has(this.chapter.book_id as number)) {
             MessageBox.confirm('是否将小说加入书架？').then(() => {
                 this.recordFollow();
                 Toast('添加成功！')
@@ -136,17 +136,17 @@ export default class Read extends Vue {
         this.recordFollow();
         next()
     }
-    
-    created() {
-        dispatchChapter(parseInt(this.$route.params.id)).then(res => {
+
+    public created() {
+        dispatchChapter(parseInt(this.$route.params.id, 10)).then(res => {
             this.chapter = res;
             this.refreshPager();
-            this.$refs.slider.refresh(res.book_id);
+            (this.$refs.slider as SliderMenu).refresh(res.book_id as number);
         });
         this.configs = BookRecord.getTheme();
     }
 
-    mounted () {
+    public mounted() {
         this.isReady = true;
         window.onresize = () => {
             this.refreshSize();
@@ -155,45 +155,45 @@ export default class Read extends Vue {
         this.refreshPager();
     }
 
-    recordFollow() {
+    public recordFollow() {
         if (!this.chapter) {
             return;
         }
-        if (BookRecord.has(this.chapter.book_id)) {
+        if (BookRecord.has(this.chapter.book_id as number)) {
             BookRecord.update(this.chapter, this.progress);
             return;
         }
-        dispatchBook(this.chapter.book_id).then(book => {
-            BookRecord.add(book, this.chapter, this.progress);
+        dispatchBook(this.chapter.book_id as number).then(book => {
+            BookRecord.add(book, this.chapter as IChapter, this.progress);
         })
     }
 
-    refreshSize() {
-        let size = this.getClientSize();
+    public refreshSize() {
+        const size = this.getClientSize();
         this.width = size.width;
         this.height = size.height;
     }
 
-    getClientSize() {
-        if(window.innerHeight !== undefined){
+    public getClientSize() {
+        if (window.innerHeight !== undefined){
             return {
-                'width': window.innerWidth,
-                'height': window.innerHeight
-            }
+                width: window.innerWidth,
+                height: window.innerHeight,
+            };
         }
-        if(document.compatMode === "CSS1Compat"){
+        if (document.compatMode === 'CSS1Compat'){
             return {
-                'width': document.documentElement.clientWidth,
-                'height': document.documentElement.clientHeight
-            }
+                width: document.documentElement.clientWidth,
+                height: document.documentElement.clientHeight,
+            };
         }
         return {
-            'width': document.body.clientWidth,
-            'height': document.body.clientHeight
-        }
+            width: document.body.clientWidth,
+            height: document.body.clientHeight,
+        };
     }
 
-    refreshPager(page: number = 1) {
+    public refreshPager(page: number = 1) {
         if (!this.isReady || this.isPagerReady) {
             return;
         }
@@ -202,11 +202,11 @@ export default class Read extends Vue {
         }
         this.isPagerReady = true;
         this.$route.meta.title = this.chapter.title;
-        this.$refs.pager.refreshPager(this.chapter.content);
+        (this.$refs.pager as ReadPager).refreshPager(this.chapter.content + '');
         this.goPager(page);
     }
 
-    tapPrev() {
+    public tapPrev() {
         if (!this.chapter || !this.chapter.previous) {
             Toast('已到第一章节，无法前进了');
             return;
@@ -220,9 +220,10 @@ export default class Read extends Vue {
         });
     }
 
-    tapRead(item: IChapter) {
+    public tapRead(item: IChapter) {
         this.readMode = 0;
-        if (this.chapter && item.id == this.chapter.id) {
+        if (this.chapter
+            && item.id === this.chapter.id) {
             return;
         }
         this.chapter = item;
@@ -235,8 +236,8 @@ export default class Read extends Vue {
         });
     }
 
-    tapNext() {
-       if (!this.chapter || !this.chapter.next) {
+    public tapNext() {
+        if (!this.chapter || !this.chapter.next) {
             Toast('已到最新章节，没有更多了');
             return;
         }
@@ -249,21 +250,21 @@ export default class Read extends Vue {
         });
     }
 
-    tapProgress(data: IProgress) {
+    public tapProgress(data: IProgress) {
         this.progress = data.progress;
     }
 
-    goPager(page: number) {
-        this.$refs.pager.goPager(page);
+    public goPager(page: number) {
+        (this.$refs.pager as ReadPager).goPager(page);
     }
 
-    tapMoveProgress(val: number) {
+    public tapMoveProgress(val: number) {
         this.progress = val;
-        this.$refs.pager.goProgress(val)
+        (this.$refs.pager as ReadPager).goProgress(val)
     }
 
-    tapMiddle(toggle?: boolean) {
-        if (typeof toggle == 'undefined') {
+    public tapMiddle(toggle?: boolean) {
+        if (typeof toggle === 'undefined') {
             this.readMode = this.readMode > 0 ? 0 : 1;
             return;
         }
@@ -272,20 +273,20 @@ export default class Read extends Vue {
         }
     }
 
-    tapSetting() {
+    public tapSetting() {
         this.readMode = 2;
     }
 
-    tapEye() {
-        if (this.configs.theme == 7) {
-            this.configs.theme = this.configs.old_theme;
+    public tapEye() {
+        if (this.configs.theme === 7) {
+            this.configs.theme = this.configs.oldTheme;
             return;
         }
-        this.configs.old_theme = this.configs.theme;
+        this.configs.oldTheme = this.configs.theme;
         this.configs.theme = 7;
     }
 
-    tapMinus(name: string) {
+    public tapMinus(name: 'size' | 'line' | 'letter') {
         if (!this.configs.hasOwnProperty(name)) {
             return;
         }
@@ -294,24 +295,26 @@ export default class Read extends Vue {
             line: [2, 1, 40],
             letter: [1, 1, 40],
         };
-        this.configs[name] = Math.min(Math.max(this.configs[name] - this.size_round[name][1], this.size_round[name][0]), this.size_round[name][2]);
-        this.$refs.pager.refreshPage();
+        this.configs[name] = Math.min(Math.max(this.configs[name] as number - this.sizeRound[name][1],
+        this.sizeRound[name][0]), this.sizeRound[name][2]);
+        (this.$refs.pager as ReadPager).refreshPage();
     }
 
-    tapPlus(name: string) {
+    public tapPlus(name: 'size' | 'line' | 'letter') {
         if (!this.configs.hasOwnProperty(name)) {
             return;
         }
-        this.configs[name] = Math.min(Math.max(this.configs[name] + this.size_round[name][1], this.size_round[name][0]), this.size_round[name][2]);
-        this.$refs.pager.refreshPage();
+        this.configs[name] = Math.min(Math.max(this.configs[name] as number + this.sizeRound[name][1],
+        this.sizeRound[name][0]), this.sizeRound[name][2]);
+        (this.$refs.pager as ReadPager).refreshPage();
     }
 
     @Watch('configs', {deep: true})
-    onThemeChange(val: ITheme, old: any) {
+    public onThemeChange(val: ITheme, old: any) {
         BookRecord.saveTheme(this.configs);
     }
 
-    tapChapter() {
+    public tapChapter() {
         this.readMode = 4;
     }
 }

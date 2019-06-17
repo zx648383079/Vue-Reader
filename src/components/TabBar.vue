@@ -7,7 +7,7 @@
     </footer>
 </template>
 <script lang="ts">
-import Vue from 'vue';
+import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
 
 interface IMenu {
     name: string,
@@ -15,40 +15,35 @@ interface IMenu {
     url: string
 }
 
-export default Vue.extend({
-    name: 'TabBar',
-    data() {
-        return {
-            menus: [
-                {
-                    name: '书架',
-                    icon: 'fa fa-book',
-                    url: 'home',
-                },
-                {
-                    name: '分类',
-                    icon: 'fa fa-th-large',
-                    url: 'category',
-                },
-                {
-                    name: '搜索',
-                    icon: 'fa fa-search',
-                    url: 'search',
-                },
-                {
-                    name: '我的',
-                    icon: 'fa fa-user',
-                    url: 'member',
-                },
-            ],
-        };
-    },
-    methods: {
-        tapMenu(item: IMenu) {
-            this.$router.push({ name: item.url});
+@Component
+export default class TabBar extends Vue {
+    public menus: IMenu[]  = [
+        {
+            name: '书架',
+            icon: 'fa fa-book',
+            url: 'home',
         },
-    },
-})
+        {
+            name: '分类',
+            icon: 'fa fa-th-large',
+            url: 'category',
+        },
+        {
+            name: '搜索',
+            icon: 'fa fa-search',
+            url: 'search',
+        },
+        {
+            name: '我的',
+            icon: 'fa fa-user',
+            url: 'member',
+        },
+    ];
+
+    public tapMenu(item: IMenu) {
+        this.$router.push({ name: item.url});
+    }
+}
 </script>
 
 <style lang="scss" scoped>

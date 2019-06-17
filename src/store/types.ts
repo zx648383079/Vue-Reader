@@ -6,3 +6,6 @@ export const SET_CATEGORIES = 'SET_CATEGORIES';
 
 export const TOKEN_KEY = 'token';
 export const THEME_CONFIGS_KEY = 'THEME_CONFIGS_KEY';
+
+export const SET_USER = 'SET_USER';
+export const SET_TOKEN = 'SET_TOKEN';

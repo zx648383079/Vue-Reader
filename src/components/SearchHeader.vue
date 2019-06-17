@@ -12,51 +12,53 @@
     </header>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-export default Vue.extend({
-      data() {
-        return {
-            currrent: ''
-        };
-    },
-    props: ['value'],
-    methods: {
-        tapBack() {
-            if (this.value && this.value.length > 0) {
-                this.tapClear();
-                return;
-            }
-            if (window.history.length <= 1) {
-                this.$router.push('/');
-                return;
-            }
-            this.$router.go(-1);
-        },
-        updateVal(val: string) {
-            this.$emit('input', val);
-            this.currrent = val;
-        },
-        tapClear() {
-            this.updateVal('');
-        },
-        onKeyUp(event: any) {
-            if (!this.value || this.value.trim().length === 0) {
-                return;
-            }
-            if (event.which === 13) {
-                this.$emit('enter', this.value);
-                return;
-            }
-            this.$emit('keyup', event);
-        },
-        tapSearch() {
-            this.$emit('enter', this.value);
-        },
-        tapFocus() {
-            this.$emit('focus');
+import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+
+@Component
+export default class SearchHeader extends Vue {
+    @Prop(String) public readonly value!: string;
+    public currrent = '';
+
+    public tapBack() {
+        if (this.value && this.value.length > 0) {
+            this.tapClear();
+            return;
         }
+        if (window.history.length <= 1) {
+            this.$router.push('/');
+            return;
+        }
+        this.$router.go(-1);
     }
-})
+
+    public updateVal(val: string) {
+        this.$emit('input', val);
+        this.currrent = val;
+    }
+
+    public tapClear() {
+        this.updateVal('');
+    }
+
+    public onKeyUp(event: any) {
+        if (!this.value || this.value.trim().length === 0) {
+            return;
+        }
+        if (event.which === 13) {
+            this.$emit('enter', this.value);
+            return;
+        }
+        this.$emit('keyup', event);
+    }
+
+    public tapSearch() {
+        this.$emit('enter', this.value);
+    }
+
+    public tapFocus() {
+        this.$emit('focus');
+    }
+}
 </script>
 <style lang="scss" scoped>
 header {

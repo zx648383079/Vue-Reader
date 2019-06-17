@@ -7,7 +7,7 @@
             </div>
             <div class="box"
                 v-infinite-scroll="loadMore"
-                infinite-scroll-disabled="is_loading"
+                infinite-scroll-disabled="isLoading"
                 infinite-scroll-distance="10">
                 <BookItem v-for="(item, index) in items" :key="index" :book="item"></BookItem>
             </div>
@@ -24,41 +24,41 @@ import { IBook, getBookList } from '@/api/book';
 Vue.use(InfiniteScroll);
 
 @Component({
-  components: {
-    BackHeader,
-    BookItem,
-  },
+    components: {
+        BackHeader,
+        BookItem,
+    },
 })
 export default class Bang extends Vue {
-    tabs: any[] = [
+    public tabs: any[] = [
         {
             name: '总榜',
-            key: 'all'
+            key: 'all',
         },
         {
             name: '月榜',
-            key: 'month'
+            key: 'month',
         },
         {
             name: '周榜',
-            key: 'week'
-        }
+            key: 'week',
+        },
     ];
-    activeTab: number = 0;
-    category: number = 0;
-    title: string = '分类榜单';
-    items: IBook[] = [];
-    has_more = true;
-    page = 1;
-    is_loading = false;
+    public activeTab: number = 0;
+    public category: number = 0;
+    public title: string = '分类榜单';
+    public items: IBook[] = [];
+    public hasMore = true;
+    public page = 1;
+    public isLoading = false;
 
-    created() {
-        this.category = parseInt(this.$route.query.category);
+    public created() {
+        this.category = parseInt(this.$route.query.category + '', 10);
         this.title = this.$route.meta.title = this.$route.query.title + '榜单';
         this.refresh();
     }
 
-    tapTab(index: number) {
+    public tapTab(index: number) {
         this.activeTab = index;
         this.refresh();
     }
@@ -72,23 +72,23 @@ export default class Bang extends Vue {
      */
     public refresh() {
         this.items = [];
-        this.is_loading = false;
-        this.has_more = true;
+        this.isLoading = false;
+        this.hasMore = true;
         this.goPage(this.page = 1);
     }
 
     public goPage(page: number) {
-        if (this.is_loading || !this.has_more) {
+        if (this.isLoading || !this.hasMore) {
             return;
         }
-        this.is_loading = true;
+        this.isLoading = true;
         getBookList({
             category: this.category,
             top: this.tabs[this.activeTab].key,
             page,
         }).then(res => {
-            this.has_more = res.paging.more;
-            this.is_loading = false;
+            this.hasMore = res.paging.more;
+            this.isLoading = false;
             res.data.forEach((item: IBook) => {
                 this.items.push(item);
             });

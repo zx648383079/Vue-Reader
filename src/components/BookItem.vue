@@ -17,7 +17,7 @@ import {IBook} from '../api/book';
 
 @Component
 export default class BookItem extends Vue {
-    @Prop(Object) readonly book!: IBook
+    @Prop(Object) public readonly book!: IBook
 
     public tapBook() {
         this.$router.push('/book/' + this.book.id);

@@ -28,33 +28,33 @@ import BookRecord from '@/utils/book';
 
 @Component({
     components: {
-        BackHeader
-    }
+        BackHeader,
+    },
 })
 export default class Chapter extends Vue {
-    items?: IChapter[] = [];
-    isSort: boolean = false;
-    activeChapter: number = 0;
+    public items?: IChapter[] = [];
+    public isSort: boolean = false;
+    public activeChapter: number = 0;
 
-    created() {
-        const book_id = parseInt(this.$route.params.book);
-        if (!book_id) {
+    public created() {
+        const bookId = parseInt(this.$route.params.book, 10);
+        if (!bookId) {
             return;
         }
-        dispatchChapters(book_id).then(res => {
+        dispatchChapters(bookId).then(res => {
             this.items = res;
         });
-        const record = BookRecord.getItem(book_id);
+        const record = BookRecord.getItem(bookId);
         if (record) {
             this.activeChapter = record.chapter_id;
         }
     }
 
-    tapChapter(item: IChapter) {
+    public tapChapter(item: IChapter) {
         this.$router.push('/read/' + item.id);
     }
 
-    tapSort() {
+    public tapSort() {
         this.isSort = !this.isSort;
         if (this.items) {
             this.items.reverse();

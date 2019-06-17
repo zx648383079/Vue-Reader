@@ -2,7 +2,7 @@
 
 服务端：[PHP-ZoDream](https://github.com/zx648383079/PHP-ZoDream/tree/master/Module/Book) 未上线
 
-使用 typescript 重构此项目
+使用 typescript + vue 重构此项目
 
 ## 页面
 
@@ -20,7 +20,9 @@
 
 [√] 章节阅读页
 
-[×] 个人中心页（本项目不实现，请参考[商城项目](https://github.com/zx648383079/Vue-Shop)） 
+[√] 个人中心页
+
+[√] 登录页
 
 
 ## 功能

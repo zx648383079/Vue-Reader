@@ -5,7 +5,7 @@
         <div class="has-header" v-show="!isSearch">
             <div class="box"
                 v-infinite-scroll="loadMore"
-                infinite-scroll-disabled="is_loading"
+                infinite-scroll-disabled="isLoading"
                 infinite-scroll-distance="10">
                 <BookItem v-for="(item, index) in items" :key="index" :book="item"></BookItem>
             </div>
@@ -29,21 +29,21 @@ Vue.use(InfiniteScroll);
 })
 export default class Search extends Vue {
 
-    isSearch: boolean = true;
-    keywords: string = '';
-    category?: number;
-    author?: number;
-    categories?: ICategory[] = [];
-    items: IBook[] = [];
-    has_more = true;
-    page = 1;
-    is_loading = false;
-    
-    created() {
-        this.isSearch = Object.keys(this.$route.query).length == 0;
+    public isSearch: boolean = true;
+    public keywords: string = '';
+    public category?: number;
+    public author?: number;
+    public categories?: ICategory[] = [];
+    public items: IBook[] = [];
+    public hasMore = true;
+    public page = 1;
+    public isLoading = false;
+
+    public created() {
+        this.isSearch = Object.keys(this.$route.query).length === 0;
         if (!this.isSearch) {
-            this.category = this.$route.query.category;
-            this.author = this.$route.query.author;
+            this.category = parseInt(this.$route.query.category + '', 10);
+            this.author = parseInt(this.$route.query.author + '', 10);
             this.keywords = this.$route.query.keywords + '';
         }
         // getCategories().then(res => {
@@ -52,11 +52,11 @@ export default class Search extends Vue {
         this.refresh();
     }
 
-    tapFocusSearch() {
+    public tapFocusSearch() {
         this.isSearch = true;
     }
 
-    updateVal(val: string) {
+    public updateVal(val: string) {
         this.keywords = val;
         if (!val || val.length < 1) {
             this.isSearch = true;
@@ -75,24 +75,24 @@ export default class Search extends Vue {
      */
     public refresh() {
         this.items = [];
-        this.is_loading = false;
-        this.has_more = true;
+        this.isLoading = false;
+        this.hasMore = true;
         this.goPage(this.page = 1);
     }
 
     public goPage(page: number) {
-        if (this.is_loading || !this.has_more) {
+        if (this.isLoading || !this.hasMore) {
             return;
         }
-        this.is_loading = true;
+        this.isLoading = true;
         getBookList({
             keywords: this.keywords,
             category: this.category,
             author: this.author,
             page,
         }).then(res => {
-            this.has_more = res.paging.more;
-            this.is_loading = false;
+            this.hasMore = res.paging.more;
+            this.isLoading = false;
             res.data.forEach((item: IBook) => {
                 this.items.push(item);
             });

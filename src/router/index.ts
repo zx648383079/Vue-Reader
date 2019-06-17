@@ -1,12 +1,14 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-import Home from '@/pages/Home.vue'
-import Category from '@/pages/Category.vue'
-import Search from '@/pages/Search.vue'
-import Book from '@/pages/Book.vue'
-import Chapter from '@/pages/Chapter.vue'
-import Read from '@/pages/Read.vue'
-import Bang from '@/pages/Bang.vue'
+import Vue from 'vue';
+import Router from 'vue-router';
+import Home from '@/pages/Home.vue';
+import Category from '@/pages/Category.vue';
+import Search from '@/pages/Search.vue';
+import Book from '@/pages/Book.vue';
+import Chapter from '@/pages/Chapter.vue';
+import Read from '@/pages/Read.vue';
+import Bang from '@/pages/Bang.vue';
+import Member from '@/pages/Member.vue';
+import Login from '@/pages/Login.vue';
 
 Vue.use(Router)
 
@@ -34,6 +36,22 @@ export default new Router({
             component: Bang,
             meta: {
                 title: '分类榜单',
+            },
+        },
+        {
+            path: '/member',
+            name: 'member',
+            component: Member,
+            meta: {
+                title: '会员中心',
+            },
+        },
+        {
+            path: '/login',
+            name: 'login',
+            component: Login,
+            meta: {
+                title: '登录',
             },
         },
         {

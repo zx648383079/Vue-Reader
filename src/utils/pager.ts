@@ -203,7 +203,7 @@ export class Pager {
     }
 
     /**
-     * 
+     * 根据尺寸获取页数
      * @param fontSize
      * @param lineSpace
      * @param letterSpace

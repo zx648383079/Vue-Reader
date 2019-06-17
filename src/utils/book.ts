@@ -11,6 +11,7 @@ export interface IBookRecord extends IBook {
 }
 
 export interface ITheme {
+    [key: string]: any,
     font?: number,
     theme?: number,
     old_theme?: number, // 记录夜间模式切换

@@ -80,7 +80,7 @@ const actions = {
         });
     },
     getChapter(context: IActionContext, id: number) {
-        const hasChapter = function(): IChapter| boolean {
+        const hasChapter = (): IChapter| boolean => {
             if (!context.state.chapters || context.state.chapters.length < 1) {
                 return false;
             }
@@ -102,7 +102,7 @@ const actions = {
                 resolve(res);
             });
         });
-    }
+    },
 };
 
 // mutations

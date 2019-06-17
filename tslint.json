@@ -1,5 +1,5 @@
 {
-  "defaultSeverity": "warning",
+  "defaultSeverity": "warn",
   "extends": [
     "tslint:recommended"
   ],
@@ -10,12 +10,32 @@
   },
   "rules": {
     "quotemark": [true, "single"],
+    "arrow-parens": [false, "as-needed"],
     "indent": [true, "spaces", 2],
+    "no-empty": false,
+    "no-var-keyword": true,
+    "triple-equals": true,
     "interface-name": false,
     "ordered-imports": false,
     "object-literal-sort-keys": false,
     "no-consecutive-blank-lines": false,
-
+    "return-undefined": false,
+    "forin": true,
+    "no-sparse-arrays": true,
+    "deprecation": true,
+    "no-duplicate-imports": true,
+    "object-literal-shorthand": true,
+    "one-line": true,
+    "no-this-assignment": [
+      false,
+      {
+        "allowed-names": [
+          "^self$",
+          "^that$"
+        ],
+        "allow-destructuring": true
+      }
+    ],
     "semicolon": [false, "always"]
   }
 }

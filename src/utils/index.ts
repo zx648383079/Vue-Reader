@@ -1,7 +1,25 @@
-export const apiEndpoint = 'http://zodream.localhost/open/'
-export const assetUri = 'http://zodream.localhost'
-export const appId = '11543906547'
-export const secret = '012e936d3d3653b40c6fc5a32e4ea685'
+import { Md5 } from 'ts-md5';
+
+export const apiEndpoint = 'http://zodream.localhost/open/';
+export const assetUri = 'http://zodream.localhost';
+export const appId = '11543906547';
+export const secret = '012e936d3d3653b40c6fc5a32e4ea685';
+
+interface IAppParam {
+    appid: string,
+    timestamp: string,
+    sign: string,
+}
+
+export function getAppParams(): IAppParam {
+    const timestamp = getCurrentTime();
+    const sign = Md5.hashStr(appId + timestamp + secret) + '';
+    return {
+        appid: appId,
+        timestamp,
+        sign,
+    };
+}
 
 export function setLocalStorage(key: string, value: any) {
     let val = value;

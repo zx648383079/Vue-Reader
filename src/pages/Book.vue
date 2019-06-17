@@ -4,7 +4,7 @@
             <a class="back" @click="tapBack">
                 <i class="fa fa-chevron-left" aria-hidden="true"></i>
             </a>
-            <a class="more" href="">
+            <a class="more" href="javascript:;">
                 <i class="fa fa-ellipsis-h"></i>
             </a>
             <div class="cover">
@@ -66,12 +66,12 @@ Vue.component(Cell.name, Cell);
 
 @Component
 export default class Book extends Vue {
-    book?: IBook;
-    isFollow: boolean = false;
+    public book?: IBook;
+    public isFollow: boolean = false;
 
-    created() {
+    public created() {
         this.book = {
-            id: parseInt(this.$route.params.id)
+            id: parseInt(this.$route.params.id, 10),
         };
         this.isFollow = BookRecord.has(this.book.id);
         dispatchBook(this.book.id).then(res => {
@@ -89,7 +89,7 @@ export default class Book extends Vue {
         });
     }
 
-    tapBack() {
+    public tapBack() {
         if (window.history.length <= 1) {
             this.$router.push('/');
             return;
@@ -97,14 +97,14 @@ export default class Book extends Vue {
         this.$router.go(-1);
     }
 
-    tapChapter() {
+    public tapChapter() {
         if (!this.book) {
             return;
         }
         this.$router.push('/chapter/' + this.book.id);
     }
 
-    tapRead() {
+    public tapRead() {
         if (!this.book || !this.book.first_chapter) {
             return;
         }
@@ -112,7 +112,7 @@ export default class Book extends Vue {
         this.$router.push('/read/' + (record ? record.chapter_id : this.book.first_chapter.id));
     }
 
-    tapFollow() {
+    public tapFollow() {
         if (!this.book || !this.book.first_chapter) {
             return;
         }

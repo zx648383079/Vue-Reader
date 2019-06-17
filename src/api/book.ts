@@ -1,4 +1,4 @@
-import { fetch } from '../utils/http'
+import { fetch, post } from '../utils/http'
 
 export interface IPaging {
     limit: number;
@@ -63,6 +63,14 @@ export interface IChapter {
     next?: IChapter,
 }
 
+export interface IUser {
+    id: number;
+    email: string;
+    name: string;
+    avatar: string;
+    token?: string;
+}
+
 export const getHot = () => fetch<IData<string>>('book/home/hot');
 
 export const getTips = (keywords: string) => fetch<IData<string>>('book/home/suggest', {keywords});
@@ -78,3 +86,10 @@ export const getBook = (id: number) => fetch<IBook>('book', {id});
 export const getChapters = (book: number) => fetch<IData<IChapter>>('book/chapter', {book});
 
 export const getChapter = (id: number) => fetch<IChapter>('book/chapter', {id});
+
+
+export const login = (param: any) => post<IUser>('auth/login', param);
+
+export const logout = () => fetch('auth/logout');
+
+export const getProfile = () => fetch<IUser>('auth/user');

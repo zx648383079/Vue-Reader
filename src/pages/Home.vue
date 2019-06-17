@@ -27,50 +27,53 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import TabBar from '@/components/TabBar.vue';
-import Book,{ IBookRecord } from '@/utils/book';
+import Book, { IBookRecord } from '@/utils/book';
 
 @Component({
-  components: {
-    TabBar,
-  },
+    components: {
+        TabBar,
+    },
 })
 export default class Home extends Vue {
-    items?: IBookRecord[] = [];
-    startX: number = 0;
-    endX: number = 0;
-    activeSwiper: number = -1;
+    public items?: IBookRecord[] = [];
+    public startX: number = 0;
+    public endX: number = 0;
+    public activeSwiper: number = -1;
 
-    created() {
+    public created() {
         this.items = Book.getItems();
     }
 
-    tapBook(item: IBookRecord) {
+    public tapBook(item: IBookRecord) {
         this.$router.push('/read/' + item.chapter_id);
     }
 
-    //滑动开始
-    touchStart(e: TouchEvent){
+    // 滑动开始
+    public touchStart(e: TouchEvent){
         this.startX = e.touches[0].clientX;
     }
-    //滑动结束
-    touchEnd(e: TouchEvent){
+    // 滑动结束
+    public touchEnd(e: TouchEvent){
         this.endX = e.changedTouches[0].clientX;
-        if(this.startX - this.endX > 30){
-            this.activeSwiper = e.currentTarget.dataset.index;
+        if (this.startX - this.endX > 30){
+            this.activeSwiper = (e.currentTarget as any).dataset.index;
         }
-        if(this.startX - this.endX < -30){
+        if (this.startX - this.endX < -30){
             this.activeSwiper = -1;
         }
         this.startX = 0;
         this.endX = 0;
     }
-    //判断当前是否有滑块处于滑动状态
-    checkSlide(){
+    // 判断当前是否有滑块处于滑动状态
+    public checkSlide(){
         return this.activeSwiper > -1;
     }
-    //删除
-    deleteItem(e: any){
-        let index = e.currentTarget.dataset.index;
+    // 删除
+    public deleteItem(e: any){
+        if (!this.items) {
+            return;
+        }
+        const index = e.currentTarget.dataset.index;
         this.activeSwiper = -1;
         const item = this.items[index];
         this.items.splice(index, 1);

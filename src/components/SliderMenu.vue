@@ -26,22 +26,22 @@ import { dispatchChapters } from '@/store/dispatches';
 
 @Component
 export default class SliderMenu extends Vue {
-    items?: IChapter[] = [];
-    isSort: boolean = false;
-    @Prop(Number) readonly chapter?: number;
+    public items?: IChapter[] = [];
+    public isSort: boolean = false;
+    @Prop(Number) public readonly chapter!: number;
 
 
-    refresh(book: number) {
+    public refresh(book: number) {
         dispatchChapters(book).then(res => {
             this.items = res;
         });
     }
 
-    tapChapter(item: IChapter) {
+    public tapChapter(item: IChapter) {
         this.$emit('read', item);
     }
 
-    tapSort() {
+    public tapSort() {
         this.isSort = !this.isSort;
         if (this.items) {
             this.items.reverse();

@@ -17,17 +17,16 @@ axios.interceptors.request.use(
             'Content-Type': 'application/vnd.api+json',
             'Accept': 'application/json',
         }
-        const timestamp = util.getCurrentTime()
-        const sign = Md5.hashStr(util.appId + timestamp + util.secret)
+        const params = util.getAppParams();
         if (!config.params) {
             config.params = {}
         }
-        config.params.appid = util.appId;
-        config.params.timestamp = timestamp;
-        config.params.sign = sign;
+        config.params.appid = params.appid;
+        config.params.timestamp = params.timestamp;
+        config.params.sign = params.sign;
         const token = util.getSessionStorage(TOKEN_KEY)
         if (token) {
-            config.params.token = token
+            config.headers.Authorization = 'Bearer ' + token
         }
         return config
     },
@@ -86,7 +85,7 @@ export function fetch<T>(url: string, params = {}): Promise<T> {
  * @param data
  * @returns {Promise}
  */
-export function post(url: string, data = {}) {
+export function post<T>(url: string, data = {}): Promise<T> {
     return new Promise((resolve, reject) => {
         axios.post(url, data)
             .then((response) => {
