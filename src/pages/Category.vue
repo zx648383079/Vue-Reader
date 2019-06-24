@@ -1,6 +1,6 @@
 <template>
     <div>
-        <BackHeader :title="$route.meta.title"></BackHeader>
+        <BackHeader :title="$route.meta.title"/>
         <div class="box">
             <div class="item" v-for="(item, index) in categories" :key="index" @click="tapCategory(item)">
                 {{ item.name }}

@@ -13,8 +13,7 @@
 import { Vue, Component, Prop } from 'vue-property-decorator';
 
 export default class BackHeader extends Vue {
-
-    @Prop(String) public readonly title!: string;
+    @Prop(String) public readonly title!: string
 
     public tapBack() {
         if (window.history.length <= 1) {
