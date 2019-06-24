@@ -12,6 +12,7 @@
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator';
 
+@Component
 export default class BackHeader extends Vue {
     @Prop(String) public readonly title!: string
 
