@@ -4,6 +4,10 @@
 
 使用 typescript + vue 重构此项目
 
+## DEMO
+
+[live](https://zodream.cn/demo/reader)
+
 ## 页面
 
 [√] 书架页
