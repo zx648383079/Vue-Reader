@@ -83,7 +83,8 @@ export const getAuthors = () => fetch<IData<IAuthor>>('book/author');
 
 export const getBook = (id: number) => fetch<IBook>('book', {id});
 
-export const getChapters = (book: number) => fetch<IData<IChapter>>('book/chapter', {book});
+export const getChapters = (book: number, page = 1, perPage = 2000) =>
+    fetch<IPage<IChapter>>('book/chapter', {book, page, per_page: perPage});
 
 export const getChapter = (id: number) => fetch<IChapter>('book/chapter', {id});
 
