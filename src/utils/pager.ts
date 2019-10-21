@@ -1,3 +1,5 @@
+import { Canvas } from './canvas';
+
 export interface ILine {
     start: number,
     length: number
@@ -80,9 +82,9 @@ export class Pager {
         // 设置颜色
         context.fillStyle = color;
         // 设置水平对齐方式
-        context.textAlign = 'center';
+        // context.textAlign = 'center';
         // 设置垂直对齐方式
-        context.textBaseline = 'middle';
+        context.textBaseline = 'top';
         for (const item of fonts) {
             context.fillText(item.code, item.x, item.y);
         }
@@ -130,14 +132,16 @@ export class Pager {
      * @param fontFamily 字体
      */
     public drawCanvas(
-        context: CanvasRenderingContext2D, page: number,
+        context: CanvasRenderingContext2D | Canvas, page: number,
         fontSize: number, lineSpace: number, letterSpace: number,
         width: number, height: number, left: number = 0,
         top: number = 0, color: string = '#000', fontFamily: string = '微软雅黑'): void {
-        Pager.drawCanvasWithFonts(context,
+        Pager.drawCanvasWithFonts(context instanceof Canvas ? context.context : context,
             this.getOnePage(
                 page, fontSize, lineSpace, letterSpace,
-                width, height, left, top), fontSize + 'px ' + fontFamily, color);
+                width === 0 && context instanceof Canvas ? context.width - left * 2 : width,
+                height === 0  && context instanceof Canvas ? context.height - top * 2 : height,
+                left, top), fontSize + 'px ' + fontFamily, color);
     }
 
     public toHtml(

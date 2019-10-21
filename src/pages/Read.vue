@@ -1,7 +1,7 @@
 <template>
     <div>
         <BackHeader v-if="readMode > 0" :title="chapter.title"/>
-        <ReadPager ref="pager" :width="width" :height="height" :fontsize="configs.size" :linespace="configs.line" :letterspace="configs.letter" :font="'font-' + configs.font" :theme="'theme-' + configs.theme"  @middle="tapMiddle" @progress="tapProgress" @prev="tapPrev" @next="tapNext"></ReadPager>
+        <canvas ref="reader"></canvas>
         <footer v-if="readMode > 0">
             <div class="pager">
                 <a @click="tapPrev">上一章</a>
@@ -72,6 +72,7 @@ import BookRecord, { ITheme } from '@/utils/book';
 import { dispatchChapter, dispatchBook } from '@/store/dispatches';
 import { constants } from 'fs';
 import { THEME_CONFIGS_KEY } from '@/store/types';
+import { FlipViewer, FlipDirect } from '../utils/flipViewer';
 
 interface IProgress {
     page: number,
@@ -104,6 +105,7 @@ export default class Read extends Vue {
     public isPagerReady = false;
     public themeList = [0, 1, 2, 3, 4, 5];
     public fontList = ['雅黑', '宋体', '楷书', '启体'];
+    private filpViewer!: FlipViewer;
     public configs: ITheme = {
         font: 3,
         theme: 0,
@@ -141,13 +143,14 @@ export default class Read extends Vue {
         dispatchChapter(parseInt(this.$route.params.id, 10)).then(res => {
             this.chapter = res;
             this.refreshPager();
-            (this.$refs.slider as SliderMenu).refresh(res.book_id as number);
+            //(this.$refs.slider as SliderMenu).refresh(res.book_id as number);
         });
         this.configs = BookRecord.getTheme();
     }
 
     public mounted() {
         this.isReady = true;
+        
         window.onresize = () => {
             this.refreshSize();
         }
@@ -172,6 +175,10 @@ export default class Read extends Vue {
         const size = this.getClientSize();
         this.width = size.width;
         this.height = size.height;
+        if (this.filpViewer) {
+            this.filpViewer.canvas.reset(size.width, size.height);
+            this.filpViewer.refresh();
+        }
     }
 
     public getClientSize() {
@@ -194,6 +201,18 @@ export default class Read extends Vue {
     }
 
     public refreshPager(page: number = 1) {
+        if (!this.filpViewer) {
+            this.filpViewer = new FlipViewer(this.$refs.reader as HTMLCanvasElement, this.width, this.height, (direct, next) => {
+                if (!this.chapter) {
+                    return;
+                }
+                next(this.chapter.content as string);
+            }, (val) => {
+                this.progress = val;
+            }, () => {
+                this.tapSetting;
+            });
+        }
         if (!this.isReady || this.isPagerReady) {
             return;
         }
@@ -202,8 +221,9 @@ export default class Read extends Vue {
         }
         this.isPagerReady = true;
         this.$route.meta.title = this.chapter.title;
-        (this.$refs.pager as ReadPager).refreshPager(this.chapter.content + '');
-        this.goPager(page);
+        this.filpViewer.setContent(this.chapter.content as string);
+        // (this.$refs.pager as ReadPager).refreshPager(this.chapter.content + '');
+        // this.goPager(page);
     }
 
     public tapPrev() {
