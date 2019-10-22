@@ -199,11 +199,7 @@ export class Pager {
      * @param lineCount
      */
     public getPageCount(lineLength: number, lineCount: number): number {
-        let count = 0;
-        for (const item of this.lines) {
-            count += Pager.toLineCount(item, lineLength);
-        }
-        return Math.ceil(count / lineCount);
+        return Math.ceil(this.getLineCount(lineLength) / lineCount);
     }
 
     /**
@@ -222,6 +218,29 @@ export class Pager {
         const lineLength = Math.floor(width / fontWidth);
         const lineCount = Math.floor(height / fontHeight);
         return this.getPageCount(lineLength, lineCount);
+    }
+
+    public getLineCount(lineLength: number): number {
+        let count = 0;
+        for (const item of this.lines) {
+            count += Pager.toLineCount(item, lineLength);
+        }
+        return count;
+    }
+
+    public getLineCountCountWithWidth(
+        fontSize: number,
+        letterSpace: number, width: number): number {
+        const fontWidth = fontSize + letterSpace;
+        const lineLength = Math.floor(width / fontWidth);
+        return this.getLineCount(lineLength);
+    }
+
+    public getHeightWithWidth(
+        fontSize: number, lineSpace: number,
+        letterSpace: number, width: number): number {
+        const fontHeight = fontSize + lineSpace;
+        return this.getLineCountCountWithWidth(fontSize, letterSpace, width) * fontHeight;
     }
 
     /**

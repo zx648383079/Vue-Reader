@@ -1,7 +1,7 @@
 <template>
     <div>
         <BackHeader v-if="readMode > 0" :title="chapter.title"/>
-        <canvas ref="reader"></canvas>
+        <canvas ref="reader" style="float: left;"></canvas>
         <footer v-if="readMode > 0">
             <div class="pager">
                 <a @click="tapPrev">上一章</a>
@@ -176,8 +176,7 @@ export default class Read extends Vue {
         this.width = size.width;
         this.height = size.height;
         if (this.filpViewer) {
-            this.filpViewer.canvas.reset(size.width, size.height);
-            this.filpViewer.refresh();
+            this.filpViewer.reset(size.width, size.height);
         }
     }
 
@@ -344,23 +343,23 @@ export default class Read extends Vue {
         if (!this.filpViewer) {
             return;
         }
-        this.filpViewer.fontSize = this.configs.size as number;
-        const fontList = ['Microsoft YaHei', 'PingFangSC-Regular', 'Kaiti', '方正启体简体']
-        this.filpViewer.fontFamily = fontList[this.configs.font as number];
-        this.filpViewer.lineSpace = this.configs.line as number;
-        this.filpViewer.letterSpace = this.configs.letter as number;
-        const backgroundList = ['#ede7da', '#e0ce9e', '#cddfcd', '#cfdde1', '#ebcece', '#d0d0d0', ['#000', '#fff']]
-        const color = backgroundList[this.configs.theme as number];
-        if (typeof color === 'string') {
-            this.filpViewer.background = color;
-            this.filpViewer.color = '#000';
-        } else {
-            this.filpViewer.background = color[0];
-            this.filpViewer.color = color[1];
-        }
-        this.filpViewer.left = 10;
-        this.filpViewer.top = 10;
-        this.filpViewer.refresh();
+        this.filpViewer.batchRefresh(viwer => {
+            viwer.fontSize = this.configs.size as number;
+            const fontList = ['Microsoft YaHei', 'PingFangSC-Regular', 'Kaiti', '方正启体简体']
+            viwer.fontFamily = fontList[this.configs.font as number];
+            viwer.lineSpace = this.configs.line as number;
+            viwer.letterSpace = this.configs.letter as number;
+            const backgroundList = ['#ede7da', '#e0ce9e', '#cddfcd', '#cfdde1', '#ebcece', '#d0d0d0', ['#000', '#fff']]
+            const color = backgroundList[this.configs.theme as number];
+            if (typeof color === 'string') {
+                viwer.background = color;
+                viwer.color = '#000';
+            } else {
+                viwer.background = color[0];
+                viwer.color = color[1];
+            }
+            viwer.margin = 10;
+        });
     }
 
 

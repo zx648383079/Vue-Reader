@@ -37,10 +37,29 @@ export class Canvas {
     }
 
     /**
+     * 加阴影
+     * @param x
+     * @param y
+     * @param color
+     * @param blur 模糊i系数
+     */
+    public drawShandow(x: number, y: number, color: string, blur: number) {
+        this.context.shadowOffsetX = x;
+        this.context.shadowOffsetY = y;
+        this.context.shadowColor = color;
+        this.context.shadowBlur = blur;
+    }
+
+    /**
      * copyTop
      */
     public copyTop(box: Canvas, top: number) {
         this.context.drawImage(box.canvas, 0, top);
+        return this;
+    }
+
+    public copyLeft(box: Canvas, left: number) {
+        this.context.drawImage(box.canvas, left, 0);
         return this;
     }
 

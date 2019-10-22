@@ -26,6 +26,14 @@
     "no-duplicate-imports": true,
     "object-literal-shorthand": true,
     "one-line": true,
+    "variable-name": {
+      "options": [
+        "ban-keywords",
+        "check-format",
+        "allow-leading-underscore",
+        "allow-pascal-case"
+      ]
+    },
     "no-this-assignment": [
       false,
       {
