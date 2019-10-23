@@ -105,7 +105,6 @@ export default class Read extends Vue {
     public isPagerReady = false;
     public themeList = [0, 1, 2, 3, 4, 5];
     public fontList = ['雅黑', '宋体', '楷书', '启体'];
-    private flipViewer!: FlipViewer;
     public configs: ITheme = {
         font: 3,
         theme: 0,
@@ -114,11 +113,13 @@ export default class Read extends Vue {
         line: 10,
         letter: 4,
     };
-    public sizeRound =  {
+    public sizeRound: {[key: string]: number[]} = {
         size: [12, 2, 40],
         line: [2, 1, 40],
         letter: [1, 1, 40],
     };
+    private flipViewer!: FlipViewer;
+
 
     public beforeRouteLeave(to: any, from: any, next: () => void) {
         if (!this.chapter) {
@@ -143,14 +144,13 @@ export default class Read extends Vue {
         dispatchChapter(parseInt(this.$route.params.id, 10)).then(res => {
             this.chapter = res;
             this.refreshPager();
-            //(this.$refs.slider as SliderMenu).refresh(res.book_id as number);
+            // (this.$refs.slider as SliderMenu).refresh(res.book_id as number);
         });
         this.configs = BookRecord.getTheme();
     }
 
     public mounted() {
         this.isReady = true;
-        
         window.onresize = () => {
             this.refreshSize();
         }
@@ -201,7 +201,8 @@ export default class Read extends Vue {
 
     public refreshPager(page: number = 1) {
         if (!this.flipViewer) {
-            this.flipViewer = new FlipViewer(this.$refs.reader as HTMLCanvasElement, this.width, this.height, (direct, next) => {
+            this.flipViewer = new FlipViewer(this.$refs.reader as HTMLCanvasElement,
+            this.width, this.height, (direct, next) => {
                 if (!this.chapter) {
                     return;
                 }
@@ -240,7 +241,9 @@ export default class Read extends Vue {
     public tapPrev() {
         if (!this.chapter || !this.chapter.previous) {
             Toast('已到第一章节，无法前进了');
-            this.flipViewer && this.flipViewer.setContent();
+            if (this.flipViewer) {
+                this.flipViewer.setContent();
+            }
             return;
         }
         Indicator.open('获取《' + this.chapter.previous.title + '》中');
@@ -287,13 +290,13 @@ export default class Read extends Vue {
     }
 
     public goPager(page: number) {
-        //(this.$refs.pager as ReadPager).goPager(page);
+        // (this.$refs.pager as ReadPager).goPager(page);
     }
 
     public tapMoveProgress(val: number) {
         this.progress = val;
 
-        //(this.$refs.pager as ReadPager).goProgress(val)
+        // (this.$refs.pager as ReadPager).goProgress(val)
         if (this.flipViewer) {
             this.flipViewer.progress = val;
         }

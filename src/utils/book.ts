@@ -1,4 +1,4 @@
-import { IChapter, IBook } from '@/api/book';
+import { IChapter, IBook, saveTheme, recordHistory } from '@/api/book';
 import { getLocalStorage, setLocalStorage } from '.';
 import { FOLLOW_BOOK, THEME_CONFIGS_KEY } from '@/store/types';
 
@@ -88,6 +88,7 @@ class Book {
         const books = this.get();
         books[book.id] = record;
         this.save(books);
+        recordHistory(book.id, chapter.id, process).then(() => {});
     }
 
     public update(chapter: IChapter, process: number = 0) {
@@ -100,6 +101,7 @@ class Book {
         books[chapter.book_id].process = process;
         books[chapter.book_id].read_at = new Date().getTime();
         this.save(books);
+        recordHistory(chapter.book_id, chapter.id, process).then(() => {});
     }
 
     /**
@@ -122,6 +124,9 @@ class Book {
 
     public saveTheme(theme: ITheme) {
         setLocalStorage(THEME_CONFIGS_KEY, theme);
+        saveTheme(theme).then(() => {
+
+        });
     }
 }
 

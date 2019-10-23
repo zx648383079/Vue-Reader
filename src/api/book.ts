@@ -88,6 +88,13 @@ export const getChapters = (book: number, page = 1, perPage = 2000) =>
 
 export const getChapter = (id: number) => fetch<IChapter>('book/chapter', {id});
 
+export const getHistory = () => fetch<IData<any>>('book/history');
+export const recordHistory = (book: number, chapter: number, progress: number) =>
+    post<any>('book/history/record', {book, chapter, progress});
+
+export const getTheme = () => fetch<IData<any>>('book/theme');
+export const saveTheme = (params: any) =>
+    post<any>('book/theme/save', params);
 
 export const login = (param: any) => post<IUser>('auth/login', param);
 

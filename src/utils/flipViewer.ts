@@ -22,7 +22,7 @@ interface IPoint {
 type NextHandle = (content: string) => void
 
 export class FlipViewer {
-    private _kind: FlipKind = FlipKind.Flip;
+    private _kind: FlipKind = FlipKind.Real;
     private _fontSize: number = 18;
     private _lineSpace: number = 2;
     private _letterSpace: number = 2;
@@ -83,10 +83,10 @@ export class FlipViewer {
             return;
         }
         if (this._kind === FlipKind.Scroll) {
-            this._canvas.reset();
-            this._canvas.clear();
-            this._canvas.fill(this._background);
-            this._canvas.copyTop(this.getCanvas(), 0);
+            this.draw(cas => {
+                cas.fill(this._background);
+                cas.copyTop(this.getCanvas(), 0);
+            });
             return;
         }
         this.restoreIfRefresh();
@@ -198,9 +198,13 @@ export class FlipViewer {
         this.drawPage();
     }
 
+    public get progress(): number {
+        return Math.max(Math.min(this._page * 100 / this._total, 100), 0);
+    }
+
     /**
      * 一次性设置多个属性最后刷新
-     * @param cb 
+     * @param cb
      */
     public batchRefresh(cb: (viwer: this) => void) {
         this._canRefresh = false;
@@ -247,9 +251,9 @@ export class FlipViewer {
             this._total = total;
             return;
         }
-        const old =  this._page / this._total;
+        const old =  this.progress;
         this._total = total;
-        this._page = Math.ceil(this._page * old);
+        this._page = Math.ceil(this._page * old / 100);
     }
 
     /**
@@ -262,21 +266,21 @@ export class FlipViewer {
             });
             return;
         }
-        this._canvas.reset();
-        this._canvas.clear();
-        if (this._kind === FlipKind.Scroll) {
-            this._canvas.fill(this._background);
-        }
-        const innerWidth = this.innerWidth;
-        const innerHeight = this.innerHeight;
-        this.setTotal(
-            this._pager.getPageCountWithSize(this._fontSize,
-                this._lineSpace, this._letterSpace, innerWidth, innerHeight));
-        if (this._isLast && this._kind !== FlipKind.Scroll) {
-            this._page = this._total;
-        }
-        this._isLast = false;
-        this._canvas.copyTop(this.getCanvas(), 0);
+        this.draw(cas => {
+            if (this._kind === FlipKind.Scroll) {
+                cas.fill(this._background);
+            }
+            const innerWidth = this.innerWidth;
+            const innerHeight = this.innerHeight;
+            this.setTotal(
+                this._pager.getPageCountWithSize(this._fontSize,
+                    this._lineSpace, this._letterSpace, innerWidth, innerHeight));
+            if (this._isLast && this._kind !== FlipKind.Scroll) {
+                this._page = this._total;
+            }
+            this._isLast = false;
+            cas.copyTop(this.getCanvas(), 0);
+        });
     }
 
     /**
@@ -284,12 +288,13 @@ export class FlipViewer {
      */
     public drawPage() {
         let top = 0;
-        this._canvas.clear();
-        if (this._kind === FlipKind.Scroll) {
-            top = -this._page;
-            this._canvas.fill(this._background);
-        }
-        this._canvas.copyTop(this.getCanvas(), top);
+        this.draw(cas => {
+            if (this._kind === FlipKind.Scroll) {
+                top = -this._page;
+                cas.fill(this._background);
+            }
+            cas.copyTop(this.getCanvas(), top);
+        });
         this.notifyProgress();
     }
     /**
@@ -320,7 +325,7 @@ export class FlipViewer {
             }
             this.drawRealView(
                 this.getCanvas(this._page - 1), this.getCanvas(),
-                this.point(this.width + i, 0), this.point(this.width, 0));
+                this.point(this.width + i, 0), 0);
         }, () => {
             this.drawPage();
         });
@@ -356,7 +361,7 @@ export class FlipViewer {
             }
             this.drawRealView(
                 this.getCanvas(), this.getCanvas(this._page + 1),
-                this.point(this.width + i, 0), this.point(this.width, 0));
+                this.point(this.width + i, 0), 0);
         }, () => {
             this.drawPage();
         });
@@ -368,6 +373,7 @@ export class FlipViewer {
         let startY = 0;
         let isNext: boolean | undefined;
         let prev: IPoint | undefined;
+        let prevDeg = 0;
         let canScollPage = false; // 滚动模式下当前页面到顶或到底，继续则换页
         this._canvas.canvas.addEventListener('touchstart', e => {
             hasMove = false;
@@ -375,7 +381,7 @@ export class FlipViewer {
             startY = e.targetTouches[0].clientY;
             isNext = undefined;
             prev = undefined;
-            canScollPage = this._kind === FlipKind.Scroll && (this._page < 0 || this._page > this._total);
+            canScollPage = this._kind === FlipKind.Scroll && (this._page < 0 || this._page > this._total - this.height);
         });
         this._canvas.canvas.addEventListener('touchmove', e => {
             hasMove = true;
@@ -387,10 +393,9 @@ export class FlipViewer {
                 if (canScollPage) {
                     if (diffY > 0 && this._page < 0) {
                         this.moveToPrevious();
-                    } else if (this._page > this._total && diffY < 0) {
+                    } else if (this._page > this._total - this.height && diffY < 0) {
                         this.moveToNext();
                     }
-                    return;
                 }
                 this.drawScollView(diffY);
                 startY += diffY;
@@ -413,12 +418,17 @@ export class FlipViewer {
                 // isNext ? this.moveToNext(false) : this.moveToPrevious(false);
                 return;
             }
+            let deg = this.getAngle(prev, curr);
+            if (Math.abs(deg - prevDeg) > 20) {
+                deg = deg > prevDeg ? prevDeg + 20 : (prevDeg - 20);
+            }
+            prevDeg = deg;
             if (isNext) {
                 if (this._kind === FlipKind.Flip) {
                     this.drawFlipView(this.getCanvas(), this.getCanvas(this._page + 1), diffX);
                     return;
                 }
-                this.drawRealView(this.getCanvas(), this.getCanvas(this._page + 1), curr, prev);
+                this.drawRealView(this.getCanvas(), this.getCanvas(this._page + 1), curr, deg);
                 prev = curr;
                 return;
             }
@@ -483,7 +493,7 @@ export class FlipViewer {
     }
 
     private notifyProgress() {
-        this.progressChangedEvent(this._page * 100 / this._total);
+        this.progressChangedEvent(this.progress);
     }
 
     private drawScollView(diffY: number) {
@@ -492,9 +502,10 @@ export class FlipViewer {
         } else if (this._page + this.height > this._total) {
             return;
         }
-        this._canvas.clear();
-        this._canvas.fill(this._background);
-        this._canvas.copyTop(this.getCanvas(), -(this._page -= diffY));
+        this.draw(cas => {
+            cas.fill(this._background);
+            cas.copyTop(this.getCanvas(), -(this._page -= diffY));
+        });
         this.notifyProgress();
     }
 
@@ -505,10 +516,12 @@ export class FlipViewer {
      * @param left 上面页位置
      */
     private drawFlipView(over: Canvas, down: Canvas, left: number) {
-        this._canvas.clear();
-        this._canvas.copyTop(down, 0);
-        this._canvas.drawShandow(20, 0, '#666', 20);
-        this._canvas.copyLeft(over, left);
+        this.draw(cas => {
+            cas.clear();
+            cas.copyTop(down, 0);
+            cas.drawShandow(20, 0, '#666', 20);
+            cas.copyLeft(over, left);
+        });
     }
 
     /**
@@ -518,7 +531,7 @@ export class FlipViewer {
      * @param current 当前点
      * @param previous 上一点
      */
-    private drawRealView(over: Canvas, down: Canvas, current: IPoint, previous: IPoint) {
+    private drawRealView(over: Canvas, down: Canvas, current: IPoint, deg: number) {
         /**             a         j
          *                  k
          *             b      i  h
@@ -527,7 +540,6 @@ export class FlipViewer {
          *     c       e          f
          * a-b~d~c-e-f-h-j~i~k-a
          */
-        const deg = this.getAngle(previous, current);
         const a = this.point(current.x, current.y);
         const f = this.point(this.width, this.height);
         if (deg === 0) {
@@ -573,16 +585,8 @@ export class FlipViewer {
         const rB = h.x - a.x;
         const rC = a.x * h.y - h.x * a.y;
         const rPathAShadowDis = Math.abs((rA * i.x + rB * i.y + rC) /  Math.hypot(rA, rB));
-        const drawCallback = (canvas: Canvas, isMain: boolean = true) => {
+        const drawCallback = (canvas: Canvas) => {
             canvas.drawPath(ctx => {
-                if (!isMain) {
-                    ctx.moveTo(i.x, i.y); // 移动到i点
-                    ctx.lineTo(d.x, d.y); // 移动到d点
-                    ctx.quadraticCurveTo(d.x, d.y, b.x, b.y); // 移动到b点
-                    ctx.lineTo(a.x, a.y); // 移动到a点
-                    ctx.quadraticCurveTo(k.x, k.y, i.x, i.y); // 移动到k点
-                    return;
-                }
                 ctx.moveTo(0, 0);
                 if (deg >= 0) {
                     ctx.lineTo(0, this.height);
@@ -607,9 +611,6 @@ export class FlipViewer {
             ctx.clip();
             ABox.copyTop(over, 0);
         });
-        this._canvas.clear();
-        this._canvas.copyTop(down, 0);
-        this._canvas.copyTop(ABox, 0);
         // 绘制c的区域
         const CBox = this.createCanvas();
         CBox.save(ctx => {
@@ -618,11 +619,26 @@ export class FlipViewer {
             ctx.fill();
             ctx.globalCompositeOperation = 'source-out';
             ctx.fillStyle = '#f00';
-            drawCallback(CBox, false);
+            CBox.drawPath(() => {
+                ctx.moveTo(i.x, i.y); // 移动到i点
+                ctx.lineTo(d.x, d.y); // 移动到d点
+                ctx.quadraticCurveTo(d.x, d.y, b.x, b.y); // 移动到b点
+                ctx.lineTo(a.x, a.y); // 移动到a点
+                ctx.quadraticCurveTo(k.x, k.y, i.x, i.y); // 移动到k点
+            })
             ctx.fill();
         });
-        this._canvas.drawShandow(0, 0, '#666', 20);
-        this._canvas.copyTop(CBox, 0);
+        // this.draw((cas, ctx) => {
+        //     ctx.scale(-1, 1);
+        //     ctx.rotate(90 - deg);
+        //     cas.copyLeft(ABox, - this.width);
+        // });
+        this.draw(cas => {
+            cas.copyTop(down, 0);
+            cas.copyTop(ABox, 0);
+            cas.drawShandow(0, 0, '#666', 20);
+            cas.copyTop(CBox, 0);
+        });
     }
 
     private getAngle(a: IPoint, b: IPoint) {
@@ -738,6 +754,16 @@ export class FlipViewer {
         }
         this.restoreCache();
         this.refresh();
+    }
+
+    private draw(cb: (cas: Canvas, ctx: CanvasRenderingContext2D) => void) {
+        this._canvas.reset();
+        this._canvas.clear();
+        this._canvas.save(ctx => {
+            cb(this._canvas, ctx);
+        })
+        this._canvas.rect(this._margin.left, this.height - 5, this.innerWidth, 2, '#ccc');
+        this._canvas.rect(this._margin.left, this.height - 5, this.innerWidth * this.progress / 100, 2, '#333');
     }
 
 

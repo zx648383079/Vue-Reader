@@ -37,6 +37,14 @@ export class Canvas {
     }
 
     /**
+     * rect
+     */
+    public rect(x: number, y: number, width: number, height: number, color: string) {
+        this.context.fillStyle = color;
+        this.context.fillRect(x, y, width, height);
+    }
+
+    /**
      * 加阴影
      * @param x
      * @param y
