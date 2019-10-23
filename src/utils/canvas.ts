@@ -51,6 +51,45 @@ export class Canvas {
     }
 
     /**
+     * save
+     */
+    public save(cb?: (ctx: CanvasRenderingContext2D) => void) {
+        this.context.save();
+        if (cb) {
+            cb(this.context);
+            this.context.restore();
+        }
+        return this;
+    }
+
+    public drawLine(
+        cb: (ctx: CanvasRenderingContext2D) => void,
+        width: number = 1, color: string = '#000', close: boolean = false) {
+        this.context.beginPath();
+        this.context.lineWidth = width;
+        this.context.strokeStyle = color;
+        cb(this.context);
+        if (close) {
+            this.context.closePath();
+        }
+        this.context.stroke();
+        return this;
+    }
+
+    /**
+     * drawPath
+     */
+    public drawPath(
+        cb: (ctx: CanvasRenderingContext2D) => void, close: boolean = false) {
+        this.context.beginPath();
+        cb(this.context);
+        if (close) {
+            this.context.closePath();
+        }
+        return this;
+    }
+
+    /**
      * copyTop
      */
     public copyTop(box: Canvas, top: number) {

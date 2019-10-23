@@ -14,6 +14,11 @@ export enum FlipDirect {
     Next,
 }
 
+interface IPoint {
+    x: number,
+    y: number,
+}
+
 type NextHandle = (content: string) => void
 
 export class FlipViewer {
@@ -36,6 +41,7 @@ export class FlipViewer {
     private _page: number = 0;
     private _caches: {[page: number]: Canvas} = {};
     private _canRefresh = true;
+    private _isLast = false; // 当前翻页到上一张时需要翻到最后一页
     constructor(
         box: HTMLCanvasElement,
         width: number,
@@ -183,6 +189,15 @@ export class FlipViewer {
         }
         this.restoreIfRefresh();
     }
+
+    public set progress(val: number) {
+        this._page = Math.max(val * this._total / 100, 1);
+        if (!this._canRefresh) {
+            return;
+        }
+        this.drawPage();
+    }
+
     /**
      * 一次性设置多个属性最后刷新
      * @param cb 
@@ -211,10 +226,12 @@ export class FlipViewer {
     }
 
     /**
+     * 请设置空的清除到最后一页的设置
      * setContent
      */
-    public setContent(text: string) {
+    public setContent(text?: string) {
         if (!text) {
+            this._isLast = false;
             return;
         }
         this._pager = new Pager(text);
@@ -232,8 +249,7 @@ export class FlipViewer {
         }
         const old =  this._page / this._total;
         this._total = total;
-        this._page = Math.floor(this._page * old);
-        return;
+        this._page = Math.ceil(this._page * old);
     }
 
     /**
@@ -256,6 +272,10 @@ export class FlipViewer {
         this.setTotal(
             this._pager.getPageCountWithSize(this._fontSize,
                 this._lineSpace, this._letterSpace, innerWidth, innerHeight));
+        if (this._isLast && this._kind !== FlipKind.Scroll) {
+            this._page = this._total;
+        }
+        this._isLast = false;
         this._canvas.copyTop(this.getCanvas(), 0);
     }
 
@@ -266,35 +286,80 @@ export class FlipViewer {
         let top = 0;
         this._canvas.clear();
         if (this._kind === FlipKind.Scroll) {
-            top = this._page;
+            top = -this._page;
             this._canvas.fill(this._background);
         }
         this._canvas.copyTop(this.getCanvas(), top);
+        this.notifyProgress();
     }
-
-    public moveToNext() {
+    /**
+     * 移动到下一页
+     * @param hasTween 是否需要补间动画
+     */
+    public moveToNext(hasTween = true, startX?: number) {
         if (this._page >= this._total) {
             this.pageChangedEvent(FlipDirect.Next, text => {
                 this.setContent(text);
             });
             return;
         }
-        this._page += this._kind === FlipKind.Scroll ? 20 - this.height : 1;
-        this.drawPage();
+        if (this._kind === FlipKind.Scroll) {
+            this._page -= 20 - this.height;
+            this.drawPage();
+            return;
+        }
+        this._page += 1;
+        if (this._kind === FlipKind.None || !hasTween) {
+            this.drawPage();
+            return;
+        }
+        this.animation(startX || 0, -this.width - 20, i => {
+            if (this._kind === FlipKind.Flip) {
+                this.drawFlipView(this.getCanvas(this._page - 1), this.getCanvas(), i);
+                return;
+            }
+            this.drawRealView(
+                this.getCanvas(this._page - 1), this.getCanvas(),
+                this.point(this.width + i, 0), this.point(this.width, 0));
+        }, () => {
+            this.drawPage();
+        });
     }
 
     /**
-     * moveToPrevious
+     * 移动到上一页
+     * @param hasTween 是否需要补间动画
      */
-    public moveToPrevious() {
+    public moveToPrevious(hasTween = true, startX?: number) {
         if (this._page <= 1) {
+            this.drawPage();
+            this._isLast = true;
             this.pageChangedEvent(FlipDirect.Prevous, text => {
                 this.setContent(text);
             });
             return;
         }
-        this._page -= this._kind === FlipKind.Scroll ? 20 - this.height : 1;
-        this.drawPage();
+        if (this._kind === FlipKind.Scroll) {
+            this._page += 20 - this.height;
+            this.drawPage();
+            return;
+        }
+        this._page -= 1;
+        if (this._kind === FlipKind.None || !hasTween) {
+            this.drawPage();
+            return;
+        }
+        this.animation(startX || (-this.width - 20), 0, i => {
+            if (this._kind === FlipKind.Flip) {
+                this.drawFlipView(this.getCanvas(), this.getCanvas(this._page + 1), i);
+                return;
+            }
+            this.drawRealView(
+                this.getCanvas(), this.getCanvas(this._page + 1),
+                this.point(this.width + i, 0), this.point(this.width, 0));
+        }, () => {
+            this.drawPage();
+        });
     }
 
     private bindTouch() {
@@ -302,32 +367,65 @@ export class FlipViewer {
         let startX = 0;
         let startY = 0;
         let isNext: boolean | undefined;
+        let prev: IPoint | undefined;
+        let canScollPage = false; // 滚动模式下当前页面到顶或到底，继续则换页
         this._canvas.canvas.addEventListener('touchstart', e => {
             hasMove = false;
             startX = e.targetTouches[0].clientX;
             startY = e.targetTouches[0].clientY;
             isNext = undefined;
+            prev = undefined;
+            canScollPage = this._kind === FlipKind.Scroll && (this._page < 0 || this._page > this._total);
         });
         this._canvas.canvas.addEventListener('touchmove', e => {
             hasMove = true;
-            const diffY = e.targetTouches[0].clientY - startY;
-            if (this._kind === FlipKind.Scroll) {
-                this._canvas.clear();
-                this._canvas.fill(this._background);
-                this._canvas.copyTop(this.getCanvas(), this._page += diffY);  startY += diffY;
+            if (this._kind === FlipKind.None) {
                 return;
             }
+            const diffY = e.targetTouches[0].clientY - startY;
+            if (this._kind === FlipKind.Scroll) {
+                if (canScollPage) {
+                    if (diffY > 0 && this._page < 0) {
+                        this.moveToPrevious();
+                    } else if (this._page > this._total && diffY < 0) {
+                        this.moveToNext();
+                    }
+                    return;
+                }
+                this.drawScollView(diffY);
+                startY += diffY;
+                return;
+            }
+            if (!prev) {
+                prev = this.point(startX, startY);
+            }
+            const curr = this.point(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
             const diffX = e.targetTouches[0].clientX - startX;
             if (typeof isNext !== 'boolean') {
                 isNext = diffX < 0;
+            } else if (
+                (isNext && diffX > 0)
+                || (!isNext && diffX < 0)
+            ) {
+                return;
+            }
+            if (Math.abs(diffX) > this.width) {
+                // isNext ? this.moveToNext(false) : this.moveToPrevious(false);
+                return;
+            }
+            if (isNext) {
+                if (this._kind === FlipKind.Flip) {
+                    this.drawFlipView(this.getCanvas(), this.getCanvas(this._page + 1), diffX);
+                    return;
+                }
+                this.drawRealView(this.getCanvas(), this.getCanvas(this._page + 1), curr, prev);
+                prev = curr;
+                return;
             }
             if (this._kind === FlipKind.Flip) {
-                this._canvas.clear();
-                this._canvas.copyTop(this.getCanvas(this._page + 1), 0);
-                this._canvas.drawShandow(20, 0, '#666', 20);
-                this._canvas.copyLeft(this.getCanvas(), diffX);
+                this.drawFlipView(this.getCanvas(this._page - 1), this.getCanvas(), diffX - this.width);
+                return;
             }
-            
         });
         this._canvas.canvas.addEventListener('touchend', e => {
             if (!hasMove) {
@@ -337,13 +435,28 @@ export class FlipViewer {
             if (this._kind === FlipKind.Scroll) {
                 return;
             }
-            // e.changedTouches[0].clientX
+            if (typeof isNext !== 'boolean') {
+                return;
+            }
+            const diffX = e.changedTouches[0].clientX - startX;
+            if (
+                (isNext && diffX > 0)
+                || (!isNext && diffX < 0)
+            ) {
+                return;
+            }
+            if (isNext) {
+                this.moveToNext(true, diffX);
+                return;
+            }
+            this.moveToPrevious(true, diffX - this.width);
         });
         this.onMouseScroll(e => {
             if (this._kind === FlipKind.Scroll) {
-                this._canvas.clear();
-                this._canvas.fill(this._background);
-                this._canvas.copyTop(this.getCanvas(), this._page -= e.deltaY);
+                if (this._page < 0) {
+                    return;
+                }
+                this.drawScollView(- e.deltaY);
             }
         });
     }
@@ -369,10 +482,200 @@ export class FlipViewer {
         this.moveToPrevious();
     }
 
+    private notifyProgress() {
+        this.progressChangedEvent(this._page * 100 / this._total);
+    }
+
+    private drawScollView(diffY: number) {
+        if (this._page < 0) {
+            return;
+        } else if (this._page + this.height > this._total) {
+            return;
+        }
+        this._canvas.clear();
+        this._canvas.fill(this._background);
+        this._canvas.copyTop(this.getCanvas(), -(this._page -= diffY));
+        this.notifyProgress();
+    }
+
     /**
-     * 
-     * @param x 
-     * @param y 
+     * 画flip 模式下的一幕
+     * @param over 上面的页
+     * @param down 背景页
+     * @param left 上面页位置
+     */
+    private drawFlipView(over: Canvas, down: Canvas, left: number) {
+        this._canvas.clear();
+        this._canvas.copyTop(down, 0);
+        this._canvas.drawShandow(20, 0, '#666', 20);
+        this._canvas.copyLeft(over, left);
+    }
+
+    /**
+     * 画仿真翻页
+     * @param over 上面的页
+     * @param down 背景页
+     * @param current 当前点
+     * @param previous 上一点
+     */
+    private drawRealView(over: Canvas, down: Canvas, current: IPoint, previous: IPoint) {
+        /**             a         j
+         *                  k
+         *             b      i  h
+         *                  g
+         *       d
+         *     c       e          f
+         * a-b~d~c-e-f-h-j~i~k-a
+         */
+        const deg = this.getAngle(previous, current);
+        const a = this.point(current.x, current.y);
+        const f = this.point(this.width, this.height);
+        if (deg === 0) {
+            a.y = this.height - 1;
+        } else if (deg < 0) {
+            f.y = 0;
+        }
+        let g: IPoint = this.point(0, 0);
+        let e: IPoint = this.point(0, 0);
+        let h: IPoint = this.point(0, 0);
+        let c: IPoint = this.point(0, 0);
+        const compute = () => {
+            g = this.point((a.x + f.x) / 2, (a.y + f.y) / 2);
+            e = this.point(g.x - (f.y - g.y) * (f.y - g.y) / (f.x - g.x), f.y);
+            h = this.point(f.x, g.y - (f.x - g.x) * (f.x - g.x) / (f.y - g.y));
+            c = this.point(e.x - (f.x - e.x) / 2, f.y);
+        }
+        compute();
+        if (c.x < 0) {
+            const w0 = this.width - c.x;
+            const w1 = Math.abs(f.x - a.x);
+            const w2 = this.width * w1 / w0;
+            a.x = Math.abs(f.x - this.width * w1 / w0);
+
+            const h1 = Math.abs(f.y - a.y);
+            const h2 = w2 * h1 / w1;
+            a.y = Math.abs(f.y - h2);
+            compute();
+        }
+        const j = this.point(f.x, h.y - (f.y - h.y) / 2);
+        const b = this.getIntersectionPoint(a, e, c, j);
+        const k = this.getIntersectionPoint(a, h, c, j);
+        const d = this.point((c.x + 2 * e.x + b.x) / 4, (2 * e.y + c.y + b.y) / 4);
+        const i = this.point((j.x + 2 * h.x + k.x) / 4, (2 * h.y + j.y + k.y) / 4);
+        // 计算d点到ae的距离
+        const lA = a.y - e.y;
+        const lB = e.x - a.x;
+        const lC = a.x * e.y - e.x * a.y;
+        const lPathAShadowDis = Math.abs((lA * d.x + lB * d.y + lC) / Math.hypot(lA, lB));
+
+        // 计算i点到ah的距离
+        const rA = a.y - h.y;
+        const rB = h.x - a.x;
+        const rC = a.x * h.y - h.x * a.y;
+        const rPathAShadowDis = Math.abs((rA * i.x + rB * i.y + rC) /  Math.hypot(rA, rB));
+        const drawCallback = (canvas: Canvas, isMain: boolean = true) => {
+            canvas.drawPath(ctx => {
+                if (!isMain) {
+                    ctx.moveTo(i.x, i.y); // 移动到i点
+                    ctx.lineTo(d.x, d.y); // 移动到d点
+                    ctx.quadraticCurveTo(d.x, d.y, b.x, b.y); // 移动到b点
+                    ctx.lineTo(a.x, a.y); // 移动到a点
+                    ctx.quadraticCurveTo(k.x, k.y, i.x, i.y); // 移动到k点
+                    return;
+                }
+                ctx.moveTo(0, 0);
+                if (deg >= 0) {
+                    ctx.lineTo(0, this.height);
+                }
+                ctx.lineTo(c.x, c.y); // 移动到c点
+                ctx.quadraticCurveTo(e.x, e.y, b.x, b.y); // 从c到b画贝塞尔曲线，控制点为e
+                ctx.lineTo(a.x, a.y); // 移动到a点
+                ctx.lineTo(k.x, k.y); // 移动到k点
+                ctx.quadraticCurveTo(h.x, h.y, j.x, j.y); // 从k到j画贝塞尔曲线，控制点为h
+                if (deg < 0) {
+                    ctx.lineTo(this.width, this.height);
+                    ctx.lineTo(0, this.height);
+                } else {
+                    ctx.lineTo(this.width, 0); // 移动到左上角
+                }
+            }, true);
+        };
+        // 绘制A区域内容
+        const ABox = this.createCanvas();
+        ABox.save(ctx => {
+            drawCallback(ABox);
+            ctx.clip();
+            ABox.copyTop(over, 0);
+        });
+        this._canvas.clear();
+        this._canvas.copyTop(down, 0);
+        this._canvas.copyTop(ABox, 0);
+        // 绘制c的区域
+        const CBox = this.createCanvas();
+        CBox.save(ctx => {
+            ctx.fillStyle = '#000';
+            drawCallback(CBox);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-out';
+            ctx.fillStyle = '#f00';
+            drawCallback(CBox, false);
+            ctx.fill();
+        });
+        this._canvas.drawShandow(0, 0, '#666', 20);
+        this._canvas.copyTop(CBox, 0);
+    }
+
+    private getAngle(a: IPoint, b: IPoint) {
+        if (a.y === b.y) {
+            return 0;
+        }
+        const x = b.x - a.x;
+        const y = b.y - a.y;
+        if (x === 0) {
+            return y > 0 ? -90 : 90;
+        }
+        return Math.atan(y / x)  / (Math.PI / 180);
+    }
+
+    private getIntersectionPoint(lineA1: IPoint, lineA2: IPoint, lineB1: IPoint, lineB2: IPoint): IPoint {
+        return this.point(
+            ((lineA1.x - lineA2.x) * (lineB1.x * lineB2.y - lineB2.x * lineB1.y)
+            - (lineB1.x - lineB2.x) * (lineA1.x * lineA2.y - lineA2.x * lineA1.y))
+                / ((lineB1.x - lineB2.x) * (lineA1.y - lineA2.y) - (lineA1.x - lineA2.x) * (lineB1.y - lineB2.y)),
+            ((lineA1.y - lineA2.y) * (lineB1.x * lineB2.y - lineB2.x * lineB1.y)
+            - (lineA1.x * lineA2.y - lineA2.x * lineA1.y) * (lineB1.y - lineB2.y))
+                / ((lineA1.y - lineA2.y) * (lineB1.x - lineB2.x) - (lineA1.x - lineA2.x) * (lineB1.y - lineB2.y)),
+        );
+    }
+
+    private point(x: number, y: number): IPoint {
+        return {
+            x,
+            y,
+        };
+    }
+
+    private animation(
+        start: number, end: number,
+        callHandle: (i: number) => void, endHandle: () => void) {
+        const diff = start > end ? -1 : 1;
+        let step = 1;
+        const handle = setInterval(() => {
+            start += (step ++) * diff;
+            if ((diff > 0 && start >= end) || (diff < 0 && start <= end)) {
+                clearInterval(handle);
+                callHandle(end);
+                endHandle();
+                return;
+            }
+            callHandle(start);
+        }, 16);
+    }
+
+    /**
+     * 获取滑动的方向
+     * @param x x
+     * @param y y
      */
     private getTapedDirect(x: number, y: number): -1 | 0 | 1 {
         const blockX = this._canvas.width / 3;
@@ -391,6 +694,11 @@ export class FlipViewer {
     private getCanvas(
         page: number = this._page,
         width: number = this.width, height: number = this.height): Canvas {
+        if (this._kind !== FlipKind.Scroll && (page < 1 || page > this._total)) {
+            const tmp = this.createCanvas(width, height);
+            tmp.fill(this._background);
+            return tmp;
+        }
         if (page < 1 || this._kind === FlipKind.Scroll) {
             page = 1;
         }
@@ -403,7 +711,7 @@ export class FlipViewer {
             this._pager.getHeightWithWidth(this._fontSize, this._lineSpace, this._letterSpace, innerWidth)
             + 50 +  this._margin.top + this._margin.bottom;
         }
-        const box = Canvas.create(width, height);
+        const box = this.createCanvas(width, height);
         if (this._kind !== FlipKind.Scroll) {
             box.fill(this._background);
         }
@@ -413,6 +721,10 @@ export class FlipViewer {
             height - this._margin.top - this._margin.bottom,
             this._margin.left, this._margin.top, this._color, this._fontFamily);
         return this._caches[page] = box;
+    }
+
+    private createCanvas(width: number = this.width, height: number = this.height) {
+        return Canvas.create(width, height);
     }
 
     private restoreCache() {
@@ -427,7 +739,6 @@ export class FlipViewer {
         this.restoreCache();
         this.refresh();
     }
-
 
 
 }

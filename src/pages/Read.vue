@@ -105,7 +105,7 @@ export default class Read extends Vue {
     public isPagerReady = false;
     public themeList = [0, 1, 2, 3, 4, 5];
     public fontList = ['雅黑', '宋体', '楷书', '启体'];
-    private filpViewer!: FlipViewer;
+    private flipViewer!: FlipViewer;
     public configs: ITheme = {
         font: 3,
         theme: 0,
@@ -175,8 +175,8 @@ export default class Read extends Vue {
         const size = this.getClientSize();
         this.width = size.width;
         this.height = size.height;
-        if (this.filpViewer) {
-            this.filpViewer.reset(size.width, size.height);
+        if (this.flipViewer) {
+            this.flipViewer.reset(size.width, size.height);
         }
     }
 
@@ -200,12 +200,23 @@ export default class Read extends Vue {
     }
 
     public refreshPager(page: number = 1) {
-        if (!this.filpViewer) {
-            this.filpViewer = new FlipViewer(this.$refs.reader as HTMLCanvasElement, this.width, this.height, (direct, next) => {
+        if (!this.flipViewer) {
+            this.flipViewer = new FlipViewer(this.$refs.reader as HTMLCanvasElement, this.width, this.height, (direct, next) => {
                 if (!this.chapter) {
                     return;
                 }
-                next(this.chapter.content as string);
+                if (direct === FlipDirect.Current) {
+                    next(this.chapter.content as string);
+                    return;
+                }
+                if (direct === FlipDirect.Prevous) {
+                    this.tapPrev();
+                    return;
+                }
+                if (direct === FlipDirect.Next) {
+                    this.tapNext();
+                    return;
+                }
             }, (val) => {
                 this.progress = val;
             }, () => {
@@ -221,7 +232,7 @@ export default class Read extends Vue {
         }
         this.isPagerReady = true;
         this.$route.meta.title = this.chapter.title;
-        this.filpViewer.setContent(this.chapter.content as string);
+        this.flipViewer.setContent(this.chapter.content as string);
         // (this.$refs.pager as ReadPager).refreshPager(this.chapter.content + '');
         // this.goPager(page);
     }
@@ -229,6 +240,7 @@ export default class Read extends Vue {
     public tapPrev() {
         if (!this.chapter || !this.chapter.previous) {
             Toast('已到第一章节，无法前进了');
+            this.flipViewer && this.flipViewer.setContent();
             return;
         }
         Indicator.open('获取《' + this.chapter.previous.title + '》中');
@@ -275,12 +287,16 @@ export default class Read extends Vue {
     }
 
     public goPager(page: number) {
-        (this.$refs.pager as ReadPager).goPager(page);
+        //(this.$refs.pager as ReadPager).goPager(page);
     }
 
     public tapMoveProgress(val: number) {
         this.progress = val;
-        (this.$refs.pager as ReadPager).goProgress(val)
+
+        //(this.$refs.pager as ReadPager).goProgress(val)
+        if (this.flipViewer) {
+            this.flipViewer.progress = val;
+        }
     }
 
     public tapMiddle(toggle?: boolean) {
@@ -340,10 +356,10 @@ export default class Read extends Vue {
     }
 
     private applyConfigs() {
-        if (!this.filpViewer) {
+        if (!this.flipViewer) {
             return;
         }
-        this.filpViewer.batchRefresh(viwer => {
+        this.flipViewer.batchRefresh(viwer => {
             viwer.fontSize = this.configs.size as number;
             const fontList = ['Microsoft YaHei', 'PingFangSC-Regular', 'Kaiti', '方正启体简体']
             viwer.fontFamily = fontList[this.configs.font as number];
