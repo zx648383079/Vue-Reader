@@ -301,7 +301,8 @@ export class FlipViewer {
      * 移动到下一页
      * @param hasTween 是否需要补间动画
      */
-    public moveToNext(hasTween = true, startX?: number) {
+    public moveToNext(
+        hasTween = true, startX?: number, prevPoint: IPoint = this.point(this.width, 0), deg: number = 0) {
         if (this._page >= this._total) {
             this.pageChangedEvent(FlipDirect.Next, text => {
                 this.setContent(text);
@@ -318,24 +319,42 @@ export class FlipViewer {
             this.drawPage();
             return;
         }
-        this.animation(startX || 0, -this.width - 20, i => {
-            if (this._kind === FlipKind.Flip) {
+        if (this._kind === FlipKind.Flip) {
+            this.animation(startX || 0, -this.width - 20, i => {
                 this.drawFlipView(this.getCanvas(this._page - 1), this.getCanvas(), i);
-                return;
-            }
-            this.drawRealView(
-                this.getCanvas(this._page - 1), this.getCanvas(),
-                this.point(this.width + i, 0), 0);
-        }, () => {
-            this.drawPage();
-        });
+            }, () => {
+                this.drawPage();
+            });
+            return;
+        }
+        if (this._kind === FlipKind.Real) {
+            this.animation(prevPoint.x, 0, i => {
+                if (deg > 0) {
+                    deg = Math.max(0, deg - 5);
+                } else if (deg < 0) {
+                    deg = Math.min(0, deg + 5);
+                }
+                if (deg !== 0) {
+                    prevPoint = this.point(i, prevPoint.y - Math.tan(deg) * (prevPoint.x - i));
+                } else {
+                    prevPoint.x = i;
+                }
+                this.drawRealView(
+                    this.getCanvas(this._page - 1), this.getCanvas(),
+                    this.point(prevPoint), deg);
+            }, () => {
+                this.drawPage();
+            });
+            return;
+        }
     }
 
     /**
      * 移动到上一页
      * @param hasTween 是否需要补间动画
      */
-    public moveToPrevious(hasTween = true, startX?: number) {
+    public moveToPrevious(
+        hasTween = true, startX?: number, prevPoint: IPoint = this.point(0, 0), deg: number = 0) {
         if (this._page <= 1) {
             this.drawPage();
             this._isLast = true;
@@ -354,17 +373,33 @@ export class FlipViewer {
             this.drawPage();
             return;
         }
-        this.animation(startX || (-this.width - 20), 0, i => {
-            if (this._kind === FlipKind.Flip) {
+        if (this._kind === FlipKind.Flip) {
+            this.animation(startX || (-this.width - 20), 0, i => {
                 this.drawFlipView(this.getCanvas(), this.getCanvas(this._page + 1), i);
-                return;
-            }
-            this.drawRealView(
-                this.getCanvas(), this.getCanvas(this._page + 1),
-                this.point(this.width + i, 0), 0);
-        }, () => {
-            this.drawPage();
-        });
+            }, () => {
+                this.drawPage();
+            });
+            return;
+        }
+        if (this._kind === FlipKind.Real) {
+            this.animation(prevPoint.x, this.width, i => {
+                if (deg > 0) {
+                    deg = Math.max(0, deg - 5);
+                } else if (deg < 0) {
+                    deg = Math.min(0, deg + 5);
+                }
+                if (deg !== 0) {
+                    prevPoint = this.point(i, prevPoint.y + Math.tan(deg) * (prevPoint.x - i));
+                } else {
+                    prevPoint.x = i;
+                }
+                this.drawRealView(
+                    this.getCanvas(this._page - 1), this.getCanvas(),
+                    this.point(prevPoint), deg);
+            }, () => {
+                this.drawPage();
+            });
+        }
     }
 
     private bindTouch() {
@@ -419,8 +454,8 @@ export class FlipViewer {
                 return;
             }
             let deg = this.getAngle(prev, curr);
-            if (Math.abs(deg - prevDeg) > 20) {
-                deg = deg > prevDeg ? prevDeg + 20 : (prevDeg - 20);
+            if (Math.abs(deg - prevDeg) > 5) {
+                deg = deg > prevDeg ? prevDeg + 5 : (prevDeg - 5);
             }
             prevDeg = deg;
             if (isNext) {
@@ -428,7 +463,7 @@ export class FlipViewer {
                     this.drawFlipView(this.getCanvas(), this.getCanvas(this._page + 1), diffX);
                     return;
                 }
-                this.drawRealView(this.getCanvas(), this.getCanvas(this._page + 1), curr, deg);
+                this.drawRealView(this.getCanvas(), this.getCanvas(this._page + 1), this.point(curr), deg);
                 prev = curr;
                 return;
             }
@@ -456,10 +491,10 @@ export class FlipViewer {
                 return;
             }
             if (isNext) {
-                this.moveToNext(true, diffX);
+                this.moveToNext(true, diffX, prev, prevDeg);
                 return;
             }
-            this.moveToPrevious(true, diffX - this.width);
+            this.moveToPrevious(true, diffX - this.width, prev, prevDeg);
         });
         this.onMouseScroll(e => {
             if (this._kind === FlipKind.Scroll) {
@@ -469,6 +504,10 @@ export class FlipViewer {
                 this.drawScollView(- e.deltaY);
             }
         });
+        // window.flipView = (deg: number) => {
+        //     this.drawRealView(this.getCanvas(), this.getCanvas(this._page + 1),
+        //         this.point(150, this.height - 100), deg);
+        // };
     }
 
     private onMouseScroll(cb: (e: any) => void) {
@@ -528,10 +567,10 @@ export class FlipViewer {
      * 画仿真翻页
      * @param over 上面的页
      * @param down 背景页
-     * @param current 当前点
-     * @param previous 上一点
+     * @param a 当前点
+     * @param deg 角度
      */
-    private drawRealView(over: Canvas, down: Canvas, current: IPoint, deg: number) {
+    private drawRealView(over: Canvas, down: Canvas, a: IPoint, deg: number) {
         /**             a         j
          *                  k
          *             b      i  h
@@ -540,7 +579,6 @@ export class FlipViewer {
          *     c       e          f
          * a-b~d~c-e-f-h-j~i~k-a
          */
-        const a = this.point(current.x, current.y);
         const f = this.point(this.width, this.height);
         if (deg === 0) {
             a.y = this.height - 1;
@@ -553,8 +591,8 @@ export class FlipViewer {
         let c: IPoint = this.point(0, 0);
         const compute = () => {
             g = this.point((a.x + f.x) / 2, (a.y + f.y) / 2);
-            e = this.point(g.x - (f.y - g.y) * (f.y - g.y) / (f.x - g.x), f.y);
-            h = this.point(f.x, g.y - (f.x - g.x) * (f.x - g.x) / (f.y - g.y));
+            e = this.point(g.x - Math.pow(f.y - g.y, 2) / (f.x - g.x), f.y);
+            h = this.point(f.x, g.y - Math.pow(f.x - g.x, 2) / (f.y - g.y));
             c = this.point(e.x - (f.x - e.x) / 2, f.y);
         }
         compute();
@@ -614,11 +652,10 @@ export class FlipViewer {
         // 绘制c的区域
         const CBox = this.createCanvas();
         CBox.save(ctx => {
-            ctx.fillStyle = '#000';
             drawCallback(CBox);
             ctx.fill();
-            ctx.globalCompositeOperation = 'source-out';
             ctx.fillStyle = '#f00';
+            ctx.globalCompositeOperation = 'source-out';
             CBox.drawPath(() => {
                 ctx.moveTo(i.x, i.y); // 移动到i点
                 ctx.lineTo(d.x, d.y); // 移动到d点
@@ -634,12 +671,32 @@ export class FlipViewer {
         //     cas.copyLeft(ABox, - this.width);
         // });
         this.draw(cas => {
-            cas.copyTop(down, 0);
-            cas.copyTop(ABox, 0);
+            cas.copy(down);
+            cas.copy(ABox);
             cas.drawShandow(0, 0, '#666', 20);
-            cas.copyTop(CBox, 0);
+            cas.copy(CBox);
         });
+        // this.draw(cas => {
+        //     this.debugPoint('a', a);
+        //     this.debugPoint('b', b);
+        //     this.debugPoint('c', c);
+        //     this.debugPoint('d', d);
+        //     this.debugPoint('e', e);
+        //     this.debugPoint('f', f);
+        //     this.debugPoint('g', g);
+        //     this.debugPoint('h', h);
+        //     this.debugPoint('i', i);
+        //     this.debugPoint('j', j);
+        //     this.debugPoint('k', k);
+        //     console.log('C: a-k-i-d-b-a');
+        // }, false);
     }
+
+    // private debugPoint(name: string, p: IPoint) {
+    //     console.log(`${name}: ${p.x} , ${p.y}`);
+    //     this._canvas.dot(p.x, p.y, 2,
+    //         ['a', 'k', 'i', 'd', 'b'].indexOf(name) >= 0 ? 'blue' : 'yellow').text(name, p.x - 6, p.y);
+    // }
 
     private getAngle(a: IPoint, b: IPoint) {
         if (a.y === b.y) {
@@ -664,7 +721,10 @@ export class FlipViewer {
         );
     }
 
-    private point(x: number, y: number): IPoint {
+    private point(x: number| IPoint, y: number = 0): IPoint {
+        if (typeof x === 'object') {
+            return {x: x.x, y};
+        }
         return {
             x,
             y,
@@ -756,14 +816,18 @@ export class FlipViewer {
         this.refresh();
     }
 
-    private draw(cb: (cas: Canvas, ctx: CanvasRenderingContext2D) => void) {
-        this._canvas.reset();
-        this._canvas.clear();
+    private draw(cb: (cas: Canvas, ctx: CanvasRenderingContext2D) => void, reset = true) {
+        if (reset) {
+            this._canvas.reset();
+            this._canvas.clear();
+        }
         this._canvas.save(ctx => {
             cb(this._canvas, ctx);
         })
-        this._canvas.rect(this._margin.left, this.height - 5, this.innerWidth, 2, '#ccc');
-        this._canvas.rect(this._margin.left, this.height - 5, this.innerWidth * this.progress / 100, 2, '#333');
+        if (reset) {
+            this._canvas.rect(this._margin.left, this.height - 5, this.innerWidth, 2, '#ccc');
+            this._canvas.rect(this._margin.left, this.height - 5, this.innerWidth * this.progress / 100, 2, '#333');
+        }
     }
 
 

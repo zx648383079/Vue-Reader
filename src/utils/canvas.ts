@@ -39,9 +39,42 @@ export class Canvas {
     /**
      * rect
      */
-    public rect(x: number, y: number, width: number, height: number, color: string) {
-        this.context.fillStyle = color;
+    public rect(x: number, y: number, width: number, height: number, color?: string) {
+        if (color) {
+            this.context.fillStyle = color;
+        }
         this.context.fillRect(x, y, width, height);
+    }
+
+    public dot(x: number, y: number, size: number = 2, color?: string) {
+        this.context.beginPath();
+        this.context.arc(x, y, 2, 0, 2 * Math.PI);
+        if (color) {
+            this.context.fillStyle = color;
+        }
+        this.context.fill();
+        return this;
+    }
+
+    /**
+     * text
+     */
+    public text(text: string, x: number, y: number, color?: string, size?: number, font?: string) {
+        if (font || size) {
+            if (size) {
+                font = size + 'px ' + font;
+            }
+            this.context.font = font as string;
+        }
+        // 设置颜色
+        if (color) {
+            this.context.fillStyle = color;
+        }
+        // 设置水平对齐方式
+        // context.textAlign = 'center';
+        // 设置垂直对齐方式
+        // context.textBaseline = 'top';
+        this.context.fillText(text, x, y);
     }
 
     /**
@@ -98,16 +131,22 @@ export class Canvas {
     }
 
     /**
-     * copyTop
+     * copy
      */
-    public copyTop(box: Canvas, top: number) {
-        this.context.drawImage(box.canvas, 0, top);
+    public copy(box: Canvas, left: number = 0, top: number = 0) {
+        this.context.drawImage(box.canvas, left, top);
         return this;
     }
 
+    /**
+     * copyTop
+     */
+    public copyTop(box: Canvas, top: number) {
+        return this.copy(box, 0, top);
+    }
+
     public copyLeft(box: Canvas, left: number) {
-        this.context.drawImage(box.canvas, left, 0);
-        return this;
+        return this.copy(box, left, 0);
     }
 
     public clear() {
