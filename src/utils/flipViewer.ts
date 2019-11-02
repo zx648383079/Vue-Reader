@@ -453,10 +453,10 @@ export class FlipViewer {
                 // isNext ? this.moveToNext(false) : this.moveToPrevious(false);
                 return;
             }
-            let deg = this.getAngle(prev, curr);
-            if (Math.abs(deg - prevDeg) > 5) {
-                deg = deg > prevDeg ? prevDeg + 5 : (prevDeg - 5);
-            }
+            const deg = this.getAngle(prev, curr);
+            // if (Math.abs(deg - prevDeg) > 5) {
+            //     deg = deg > prevDeg ? prevDeg + 5 : (prevDeg - 5);
+            // }
             prevDeg = deg;
             if (isNext) {
                 if (this._kind === FlipKind.Flip) {
@@ -504,9 +504,9 @@ export class FlipViewer {
                 this.drawScollView(- e.deltaY);
             }
         });
-        // window.flipView = (deg: number) => {
+        // window.flipView = (x: number, y: number, deg: number) => {
         //     this.drawRealView(this.getCanvas(), this.getCanvas(this._page + 1),
-        //         this.point(150, this.height - 100), deg);
+        //         this.point(x, y), deg);
         // };
     }
 
@@ -579,6 +579,13 @@ export class FlipViewer {
          *     c       e          f
          * a-b~d~c-e-f-h-j~i~k-a
          */
+        if (a.y <= Math.min(this.height / 2, this.width)) {
+            deg = - 45;
+        } else if (a.y >= Math.max(this.height / 2, this.height - this.width)) {
+            deg = 45;
+        } else {
+            deg = 0;
+        }
         const f = this.point(this.width, this.height);
         if (deg === 0) {
             a.y = this.height - 1;
@@ -723,7 +730,7 @@ export class FlipViewer {
 
     private point(x: number| IPoint, y: number = 0): IPoint {
         if (typeof x === 'object') {
-            return {x: x.x, y};
+            return {x: x.x, y: x.y};
         }
         return {
             x,
