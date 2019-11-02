@@ -9,11 +9,36 @@
                 <a @click="tapNext">下一章</a>
             </div>
             <div class="setting" v-if="readMode == 2">
-                <div class="theme-box">
-                    <span v-for="(item, index) in themeList" :key="index" :class="['theme-' + index, configs.theme == index ? 'active' : '']" @click="configs.theme = index"></span>
+                <div class="line-item">
+                    <span>字体颜色</span>
+                    <div class="color-box">
+                        <ColorPicker v-model="configs.color">
+                            <span class="color" :style="'background-color: ' + configs.color"></span>
+                        </ColorPicker>
+                    </div>
                 </div>
-                <div class="font-box">
-                    <span v-for="(item, index) in fontList" :key="index" :class="[configs.font == index ? 'active' : '']" @click="configs.font = index">{{ item }}</span>
+                <div class="line-item">
+                    <span>背景颜色</span>
+                    <div class="color-box">
+                        <ColorPicker v-model="configs.background">
+                            <span class="color" :style="'background-color: ' + configs.background"></span>
+                        </ColorPicker>
+                        <span class="add-img" @click="tapBackgroundImg()">
+                            <i class="fa fa-image"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="line-item">
+                    <span>翻页效果</span>
+                    <div class="font-box">
+                        <span v-for="(item, index) in flipList" :key="index" :class="[configs.flip == index ? 'active' : '']" @click="configs.flip = index">{{ item }}</span>
+                    </div>
+                </div>
+                <div class="line-item">
+                    <span>字体</span>
+                    <div class="font-box">
+                        <span v-for="(item, index) in fontList" :key="index" :class="[configs.font == index ? 'active' : '']" @click="configs.font = index">{{ item }}</span>
+                    </div>
                 </div>
                 <div class="line-item">
                     <span>字体大小</span>
@@ -66,13 +91,14 @@ import { IChapter, getChapters, getChapter, IBook } from '../api/book';
 import ReadPager from '@/components/ReadPager.vue'
 import BackHeader from '@/components/BackHeader.vue';
 import SliderMenu from '@/components/SliderMenu.vue';
+import ColorPicker from '@/components/ColorPicker.vue';
 import {Range, MessageBox, Toast, Indicator} from 'mint-ui';
 import { getLocalStorage } from '@/utils';
 import BookRecord, { ITheme } from '@/utils/book';
 import { dispatchChapter, dispatchBook } from '@/store/dispatches';
 import { constants } from 'fs';
 import { THEME_CONFIGS_KEY } from '@/store/types';
-import { FlipViewer, FlipDirect } from '../utils/flipViewer';
+import { FlipViewer, FlipDirect, FlipKind } from '../utils/flipViewer';
 
 interface IProgress {
     page: number,
@@ -91,6 +117,7 @@ Component.registerHooks([
         ReadPager,
         BackHeader,
         SliderMenu,
+        ColorPicker,
     },
 })
 export default class Read extends Vue {
@@ -103,15 +130,17 @@ export default class Read extends Vue {
     public readMode: number = 0;
     public isReady = false;
     public isPagerReady = false;
-    public themeList = [0, 1, 2, 3, 4, 5];
     public fontList = ['雅黑', '宋体', '楷书', '启体'];
+    public flipList = ['无', '覆盖', '仿真', '滚屏'];
     public configs: ITheme = {
         font: 3,
-        theme: 0,
-        oldTheme: 0, // 记录夜间模式切换
+        background: '#fff',
+        oldTheme: '', // 记录夜间模式切换
         size: 18,
         line: 10,
         letter: 4,
+        color: '#333',
+        flip: FlipKind.Flip,
     };
     public sizeRound: {[key: string]: number[]} = {
         size: [12, 2, 40],
@@ -285,6 +314,34 @@ export default class Read extends Vue {
         });
     }
 
+    public tapBackgroundImg() {
+        const name = 'file-input';
+        let fileELment: HTMLInputElement = document.querySelector('.' + name) as HTMLInputElement;
+        const that = this;
+        const changeEventHandle = function(this: GlobalEventHandlers) {
+                const files = (this as HTMLInputElement).files;
+                if (!files || files.length < 1) {
+                    return;
+                }
+                that.flipViewer.setBackgroundImage(window.URL.createObjectURL(files[0]));
+            };
+        if (!fileELment) {
+            fileELment = document.createElement('input');
+            fileELment.type = 'file';
+            fileELment.className = name;
+            fileELment.multiple = false;
+            fileELment.accept = 'image/*';
+            document.body.appendChild(fileELment);
+            fileELment.onchange = changeEventHandle;
+        } else {
+            fileELment.value = '';
+            fileELment.multiple = false;
+            fileELment.accept = 'image/*';
+            fileELment.onchange = changeEventHandle;
+        }
+        fileELment.dispatchEvent(new MouseEvent('click'));
+    }
+
     public tapProgress(data: IProgress) {
         this.progress = data.progress;
     }
@@ -318,10 +375,13 @@ export default class Read extends Vue {
 
     public tapEye() {
         if (this.configs.theme === 7) {
-            this.configs.theme = this.configs.oldTheme;
+            this.configs.theme = 1;
+            [this.configs.background, this.configs.color] = this.configs.oldTheme.split('|');
             return;
         }
-        this.configs.oldTheme = this.configs.theme;
+        this.configs.oldTheme = [this.configs.background, this.configs.color].join('|');
+        this.configs.background = '#000';
+        this.configs.color = '#fff';
         this.configs.theme = 7;
     }
 
@@ -367,16 +427,10 @@ export default class Read extends Vue {
             const fontList = ['Microsoft YaHei', 'PingFangSC-Regular', 'Kaiti', '方正启体简体']
             viwer.fontFamily = fontList[this.configs.font as number];
             viwer.lineSpace = this.configs.line as number;
+            viwer.kind = this.configs.flip as FlipKind || FlipKind.Flip;
             viwer.letterSpace = this.configs.letter as number;
-            const backgroundList = ['#ede7da', '#e0ce9e', '#cddfcd', '#cfdde1', '#ebcece', '#d0d0d0', ['#000', '#fff']]
-            const color = backgroundList[this.configs.theme as number];
-            if (typeof color === 'string') {
-                viwer.background = color;
-                viwer.color = '#000';
-            } else {
-                viwer.background = color[0];
-                viwer.color = color[1];
-            }
+            viwer.background = this.configs.background as string || '#fff';
+            viwer.color = this.configs.color as string || '#333';
             viwer.margin = 10;
         });
     }
@@ -468,6 +522,24 @@ footer {
             font-size: 20px;
             .lang {
                 padding: 0 10px;
+            }
+        }
+        .color-box {
+            .color {
+                display: inline-block;
+                width: 30px;
+                height: 30px;
+                border: 1px solid #f00;
+            }
+            .add-img {
+                display: inline-block;
+                width: 30px;
+                height: 30px;
+                font-size: 25px;
+                line-height: 30px;
+                text-align: center;
+                vertical-align: super;
+                margin-left: 20px;
             }
         }
     }

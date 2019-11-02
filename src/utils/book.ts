@@ -1,6 +1,7 @@
 import { IChapter, IBook, saveTheme, recordHistory } from '@/api/book';
 import { getLocalStorage, setLocalStorage } from '.';
 import { FOLLOW_BOOK, THEME_CONFIGS_KEY } from '@/store/types';
+import { FlipKind } from './flipViewer';
 
 export interface IBookRecord extends IBook {
     author_name: string,
@@ -14,10 +15,13 @@ export interface ITheme {
     [key: string]: any,
     font?: number,
     theme?: number,
-    old_theme?: number, // 记录夜间模式切换
+    oldTheme?: any, // 记录夜间模式切换
     size?: number,
     line?: number,
-    letter?: number
+    letter?: number,
+    background?: string,
+    color?: string,
+    flip?: number| FlipKind,
 }
 
 interface TBookRecord {
@@ -115,10 +119,13 @@ class Book {
         return {
             font: 3,
             theme: 0,
-            old_theme: 0, // 记录夜间模式切换
+            oldTheme: '#fff|#333', // 记录夜间模式切换
             size: 18,
             line: 10,
             letter: 4,
+            flip: 1,
+            background: '#fff',
+            color: '#333',
         };
     }
 

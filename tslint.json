@@ -26,6 +26,7 @@
     "no-duplicate-imports": true,
     "object-literal-shorthand": true,
     "one-line": true,
+    "no-bitwise": false,
     "variable-name": {
       "options": [
         "ban-keywords",

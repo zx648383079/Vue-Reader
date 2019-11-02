@@ -22,7 +22,7 @@ interface IPoint {
 type NextHandle = (content: string) => void
 
 export class FlipViewer {
-    private _kind: FlipKind = FlipKind.Real;
+    private _kind: FlipKind = FlipKind.None;
     private _fontSize: number = 18;
     private _lineSpace: number = 2;
     private _letterSpace: number = 2;
