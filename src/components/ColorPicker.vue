@@ -3,7 +3,7 @@
         <div @click="showPicker" class="color-input-container">
             <slot></slot>
         </div>
-        <div class="color-picker-calendar" v-show="visibility">
+        <div class="color-picker-calendar" v-show="visibility" @click.stop>
             <div class="color-picker-sv" @touchstart="touchStart" @touchmove="touchMove" @touchend="touchEnd" :style="{'background-color': background}">
                 <i :style="{left: x - 5 + 'px', top: y - 5 + 'px'}"></i>
             </div>
@@ -18,7 +18,7 @@ import { Vue, Component, Prop, Emit, Watch } from 'vue-property-decorator';
 
 @Component
 export default class ColorPicker extends Vue {
-    @Prop(String) public readonly value?: string;
+    @Prop(String) public readonly value!: string;
 
     public visibility: boolean = false;
 
@@ -34,11 +34,7 @@ export default class ColorPicker extends Vue {
 
     @Watch('value')
     public onValueChanged(val: string, oldVal: string) {
-        this.hsv = this.parse(val);
-        this.hY = 160 - this.hsv[0] * 160;
-        this.setBackground(this.hsv[0]);
-        this.x = 160 - this.hsv[1] * 160;
-        this.y = 160 - this.hsv[2] * 160;
+        this.applyColor();
     }
 
     /**
@@ -46,6 +42,7 @@ export default class ColorPicker extends Vue {
      */
     public showPicker() {
         this.visibility = true;
+        this.applyColor();
     }
 
     public touchStart(e: TouchEvent) {
@@ -68,6 +65,14 @@ export default class ColorPicker extends Vue {
         this.doH(e);
     }
 
+    private applyColor() {
+        this.hsv = this.parse(this.value);
+        this.hY = this.clamp(160 - this.hsv[0] * 160, 0, 160);
+        this.setBackground(this.hsv[0]);
+        this.x = this.clamp(this.hsv[1] * 160, 0, 160);
+        this.y = this.clamp(160 - this.hsv[2] * 160, 0, 160);
+    }
+
     private setBackground(off: number) {
         this.hsv[0] = off;
         const b = this.HSV2RGB([off, 1, 1]);
@@ -88,7 +93,7 @@ export default class ColorPicker extends Vue {
         const offset = (e.target as HTMLDivElement).getBoundingClientRect();
         this.y = this.clamp(e.targetTouches[0].clientY - offset.top, 0, offset.height);
         this.x = this.clamp(e.targetTouches[0].clientX - offset.left, 0, offset.width);
-        this.hsv[1] = (offset.width - this.x) / offset.width;
+        this.hsv[1] = this.x / offset.width;
         this.hsv[2] = (offset.height - this.y) / offset.height;
         this.change();
     }
