@@ -1,120 +1,110 @@
 <template>
     <div>
-        <SearchBar :value="keywords" @input="updateVal" @focus="tapFocusSearch" @search="tapSearch"></SearchBar>
+        <SearchBar :value="input.keywords" @input="updateVal" @focus="tapFocusSearch" @search="tapSearch"></SearchBar>
 
-        <div class="has-header" v-show="!isSearch">
-            <div class="box"
-                v-infinite-scroll="loadMore"
-                infinite-scroll-disabled="isLoading"
-                infinite-scroll-distance="10">
+        <div class="has-header" v-show="!input.isSearch">
+            <PullToRefresh class="box" @more="loadMore">
                 <BookItem v-for="(item, index) in items" :key="index" :book="item"></BookItem>
-            </div>
+            </PullToRefresh>
         </div>
     </div>
 </template>
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import { ICategory, getCategories, IBook, getBookList } from '../api/book';
+<script lang="ts" setup>
+import { getBookList } from '@/api/book';
+import type { IBook, ICategory } from '@/api/model';
 import BookItem from '@/components/BookItem.vue';
 import SearchBar from '@/components/SearchBar.vue';
-import { InfiniteScroll } from 'mint-ui';
+import PullToRefresh from '@/components/PullToRefresh.vue';
+import { reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
-Vue.use(InfiniteScroll);
+const route = useRoute();
+const input = reactive({
+    isSearch: true,
+    keywords: '',
+    category: 0,
+    author: 0,
+    hasMore: true,
+    page: 1,
+    isLoading: false
+});
 
-@Component({
-  components: {
-    BookItem,
-    SearchBar,
-  },
-})
-export default class Search extends Vue {
+const categories = ref<ICategory[]>([]);
+const items = ref<IBook[]>([]);
 
-    public isSearch: boolean = true;
-    public keywords: string = '';
-    public category?: number;
-    public author?: number;
-    public categories?: ICategory[] = [];
-    public items: IBook[] = [];
-    public hasMore = true;
-    public page = 1;
-    public isLoading = false;
 
-    public created() {
-        this.isSearch = Object.keys(this.$route.query).length === 0;
-        if (!this.isSearch) {
-            this.category = parseInt(this.$route.query.category + '', 10);
-            this.author = parseInt(this.$route.query.author + '', 10);
-            this.keywords = this.$route.query.keywords + '';
-        }
-        // getCategories().then(res => {
-        //     this.categories = res.data;
-        // });
-        this.refresh();
+input.isSearch = Object.keys(route.query).length === 0;
+if (!input.isSearch) {
+    input.category = parseInt(route.query.category + '', 10);
+    input.author = parseInt(route.query.author + '', 10);
+    input.keywords = route.query.keywords + '';
+}
+// getCategories().then(res => {
+//     categories.value = res.data;
+// });
+refresh();
+
+function tapFocusSearch() {
+    input.isSearch = true;
+}
+
+function updateVal(val: string) {
+    input.keywords = val;
+    if (!val || val.length < 1) {
+        input.isSearch = true;
     }
+}
 
-    public tapFocusSearch() {
-        this.isSearch = true;
+function tapCategory(item: ICategory) {
+}
+
+function loadMore() {
+    goPage( ++ input.page);
+}
+
+/**
+ * refresh
+ */
+function refresh() {
+    items.value = [];
+    input.isLoading = false;
+    input.hasMore = true;
+    goPage(input.page = 1);
+}
+
+function goPage(page: number) {
+    if (input.isLoading || !input.hasMore) {
+        return;
     }
+    input.isLoading = true;
+    getBookList({
+        keywords: input.keywords,
+        category: input.category,
+        author: input.author,
+        page,
+    }).then(res => {
+        input.hasMore = res.paging.more;
+        input.isLoading = false;
+        res.data.forEach((item: IBook) => {
+            items.value.push(item);
+        });
+    })
+}
 
-    public updateVal(val: string) {
-        this.keywords = val;
-        if (!val || val.length < 1) {
-            this.isSearch = true;
-        }
-    }
+function tapSearch(keywords: string) {
+    input.keywords = keywords
+    input.isSearch = false
+    // searchRusult();
+}
 
-    public tapCategory(item: ICategory) {
-    }
+function tapEnterSearch() {
+    input.keywords = input.keywords
+    input.isSearch = true
+}
 
-    public loadMore() {
-        this.goPage( ++ this.page);
-    }
-
-    /**
-     * refresh
-     */
-    public refresh() {
-        this.items = [];
-        this.isLoading = false;
-        this.hasMore = true;
-        this.goPage(this.page = 1);
-    }
-
-    public goPage(page: number) {
-        if (this.isLoading || !this.hasMore) {
-            return;
-        }
-        this.isLoading = true;
-        getBookList({
-            keywords: this.keywords,
-            category: this.category,
-            author: this.author,
-            page,
-        }).then(res => {
-            this.hasMore = res.paging.more;
-            this.isLoading = false;
-            res.data.forEach((item: IBook) => {
-                this.items.push(item);
-            });
-        })
-    }
-
-    public tapSearch(keywords: string) {
-        this.keywords = keywords
-        this.isSearch = false
-        // this.searchRusult();
-    }
-
-    public tapEnterSearch() {
-        this.keywords = this.keywords
-        this.isSearch = true
-    }
-
-    public tapNewSearch() {
-        this.keywords = this.keywords = ''
-        this.isSearch = true
-    }
-
+function tapNewSearch() {
+    input.keywords = input.keywords = ''
+    input.isSearch = true
 }
 </script>
 <style lang="scss" scoped>

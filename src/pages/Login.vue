@@ -1,74 +1,69 @@
 <template>
     <div>
-        <BackHeader :title="$route.meta.title"></BackHeader>
+        <BackHeader :title="$route.meta.title as any"></BackHeader>
         <div class="has-header login-box">
             <div class="logo">
-                <img :src="'/assets/images/wap_logo.png' | assets" alt="">
+                <img :src="assetsFilter('/assets/images/wap_logo.png')" alt="">
             </div>
             <div class="email-password">
                 <div class="input-box">
-                    <input type="email" name="email" required autocomplete="off" v-model="email" placeholder="请输入账号">
+                    <input type="email" name="email" required autocomplete="off" v-model="input.email" placeholder="请输入账号">
                 </div>
                 <div class="input-box">
-                    <input type="password" name="password" required autocomplete="off" @keyup="tapKey" v-model="password" placeholder="请输入密码">
+                    <input type="password" name="password" required autocomplete="off" @keyup="tapKey" v-model="input.password" placeholder="请输入密码">
                 </div>
                 <button @click="tapLogin">登录</button>
             </div>
         </div>
     </div>
 </template>
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import { Toast } from 'mint-ui';
-import { dispatchLogin } from '@/store/dispatches';
-import { IUser } from '@/api/book';
+<script lang="ts" setup>
 import { isEmpty, isEmail } from '@/utils/validate';
 import BackHeader from '@/components/BackHeader.vue';
+import { reactive } from 'vue';
+import { useAuth } from '@/services';
+import { useRoute, useRouter } from 'vue-router';
+import { useDialog } from '@/components/Dialog';
+import { assetsFilter } from '@/pipes';
 
-@Component({
-    components: {
-        BackHeader,
-    },
-})
-export default class Login extends Vue {
-    public email: string = '';
+const toast = useDialog();
+const router = useRouter();
+const route = useRoute();
+const auth = useAuth();
+const input = reactive({
+    email: '',
+    password: ''
+});
 
-    public password: string = '';
-
-    public tapKey(e: KeyboardEvent) {
-        if (e.code !== 'Enter') {
-            return;
-        }
-        this.tapLogin();
+function tapKey(e: KeyboardEvent) {
+    if (e.code !== 'Enter') {
+        return;
     }
-
-    public tapChange(mode: number) {
-        this.$emit('click', mode);
+    tapLogin();
+}
+function tapLogin() {
+    const email = input.email;
+    const password = input.password;
+    if (isEmpty(email) || !isEmail(email)) {
+        toast.warning('请输入账号');
+        return;
     }
-
-    public tapLogin() {
-        const email = this.email;
-        const password = this.password;
-        if (isEmpty(email) || !isEmail(email)) {
-            Toast('请输入账号');
-            return;
-        }
-        if (!password || password.length < 4) {
-            Toast('请输入密码');
-            return;
-        }
-        dispatchLogin({email, password}).then((res: IUser) => {
-            this.tapLoginBack();
-        });
+    if (!password || password.length < 4) {
+        toast.warning('请输入密码');
+        return;
     }
+    auth.login({email, password}).then(
+        _ => {
+        tapLoginBack();
+    });
+}
 
-    public tapLoginBack() {
-        if (this.$route.query.redirect_uri) {
-            this.$router.replace(this.$route.query.redirect_uri + '');
-            return;
-        }
-        this.$router.replace('/');
+function tapLoginBack() {
+    if (route.query.redirect_uri) {
+        router.replace(route.query.redirect_uri + '');
+        return;
     }
+    router.replace('/');
 }
 </script>
 <style lang="scss" scoped>

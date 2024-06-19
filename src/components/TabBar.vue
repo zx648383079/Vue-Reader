@@ -6,8 +6,12 @@
         </a>
     </footer>
 </template>
-<script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+
+const router = useRouter();
+const { t } = useI18n();
 
 interface IMenu {
     name: string,
@@ -15,40 +19,40 @@ interface IMenu {
     url: string
 }
 
-@Component
-export default class TabBar extends Vue {
-    public menus: IMenu[]  = [
-        {
-            name: '书架',
-            icon: 'fa fa-book',
-            url: 'home',
-        },
-        {
-            name: '分类',
-            icon: 'fa fa-th-large',
-            url: 'category',
-        },
-        {
-            name: '搜索',
-            icon: 'fa fa-search',
-            url: 'search',
-        },
-        {
-            name: '我的',
-            icon: 'fa fa-user',
-            url: 'member',
-        },
-    ];
-
-    public tapMenu(item: IMenu) {
-        this.$router.push({ name: item.url});
-    }
+const menus: IMenu[]  = [
+    {
+        name: t('nav_home'),
+        icon: 'iconfont icon-book',
+        url: 'home',
+    },
+    {
+        name: t('nav_category'),
+        icon: 'iconfont icon-table',
+        url: 'category',
+    },
+    {
+        name: t('nav-search'),
+        icon: 'iconfont icon-search',
+        url: 'search',
+    },
+    {
+        name: t('nav_my'),
+        icon: 'iconfont icon-user',
+        url: 'member',
+    },
+];
+function tapMenu(item: IMenu) {
+    router.push({ name: item.url});
 }
 </script>
 
 <style lang="scss" scoped>
+@import '../assets/css/theme';
 .tab-bar {
-    border: 0.0625rem solid #e1e1e1;
+    --#{$prefix}-tab: var(--#{$prefix}-panel);
+    --#{$prefix}-tab-border: var(--#{$prefix}-border);
+    --#{$prefix}-tab-text: var(--#{$prefix}-body-text);
+    --#{$prefix}-tab-active-text: var(--#{$prefix}-danger);
     display: flex;
     justify-content: space-around;
     flex-flow: row nowrap;
@@ -58,28 +62,44 @@ export default class TabBar extends Vue {
     bottom: 0;
     width: 100%;
     height: 3rem;
-    background: #fff;
-    border-top: 1px solid #ccc;
+    background-color: var(--#{$prefix}-tab);
+    border-top: 1px solid var(--#{$prefix}-tab-border);
+    border-right: none;
+    border-bottom: none;
+    border-left: none;
     a {
-        width: 25%;
-        text-align: center;
-        display: block;
-        float: left;
-        padding-top: 0.25rem;
-        box-sizing: border-box;
-        position: relative;
-        font-size: .9rem;
-        text-decoration: none;
         position: relative;
         text-align: center;
-        .fa {
+        color: var(--#{$prefix}-tab-text);
+        span {
+            display: block;
+            margin-top: .09333rem;
+            font-size: .32rem;
+            color: var(--#{$prefix}-tab-text);
+            line-height: 1;
+        }
+        .iconfont {
             font-size: 1.5rem;
             display: block;
         }
+        .tip {
+            position: absolute;
+            top: 0;
+            right: -0.75rem;
+            background-color: var(--#{$prefix}-danger);
+            color: var(--#{$prefix}-danger-text);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 1.1875rem;
+            font-size: 0.75rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            font-style: normal;
+        }
         &.active {
-            color: #4693d0;
-            .fa {
-                color: #b4282d;
+            span,
+            .iconfont {
+                color: var(--#{$prefix}-tab-active-text);
             }
         }
     }

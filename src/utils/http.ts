@@ -1,63 +1,56 @@
 import axios from 'axios';
 import router from '@/router'
-import { Toast } from 'mint-ui'
-import { Md5 } from 'ts-md5';
-import * as util from './'
-import { TOKEN_KEY } from '@/store/types'
+import { apiEndpoint } from '../config/config';
+import { useDialog } from '../components/Dialog/plugin';
+import { useAuth } from '../services';
 
 axios.defaults.timeout = 60000
-axios.defaults.baseURL = util.apiEndpoint
+axios.defaults.baseURL = apiEndpoint
 
 // http request 拦截器
 axios.interceptors.request.use(
     (config) => {
-        // const token = getCookie('名称');注意使用的时候需要引入cookie方法，推荐js-cookie
-        config.data = JSON.stringify(config.data)
-        config.headers = {
-            'Content-Type': 'application/vnd.api+json',
-            'Accept': 'application/json',
+        if (config.data && !(config.data instanceof FormData)) {
+            config.data = JSON.stringify(config.data)
+            config.headers.setContentType('application/vnd.api+json').setAccept('application/json');
         }
-        const params = util.getAppParams();
+        const auth = useAuth();
+        const params = auth.getAppParams();
         if (!config.params) {
             config.params = {}
         }
         config.params.appid = params.appid;
         config.params.timestamp = params.timestamp;
         config.params.sign = params.sign;
-        const token = util.getSessionStorage(TOKEN_KEY)
+        const token = auth.getUserToken();
         if (token) {
-            config.headers.Authorization = 'Bearer ' + token
+            config.headers.Authorization = 'Bearer ' + token;
         }
-        return config
+        return config;
     },
     (error) => {
-        return Promise.reject(error)
+        return Promise.reject(error);
     },
 )
 
 // http response 拦截器
 axios.interceptors.response.use(
     (response) => {
-        if (response.data.errCode === 2) {
-            router.push({
-                path: '/login',
-                query: {
-                    redirect: router.currentRoute.fullPath,
-                }, // 从哪个页面跳转
-            })
-            Toast({
-                message: response.data.Message,
-                position: 'bottom',
-            })
-        }
         return response
     },
     (error) => {
-        Toast({
-            message: error,
-            position: 'bottom',
-        })
-        return Promise.reject(error)
+        useDialog().error(error && error.response ? error.response.data.message : error);
+        if (error && error.response && error.response.status === 401) {
+            useAuth().logout();
+            router.push({
+                path: '/login',
+                query: {
+                    redirect: router.currentRoute.value.fullPath,
+                }, // 从哪个页面跳转
+            })
+            return Promise.reject(error);
+        }
+        return Promise.reject(error);
     },
 )
 
@@ -67,16 +60,10 @@ axios.interceptors.response.use(
  * @param data
  * @returns {Promise}
  */
-export function fetch<T>(url: string, params = {}): Promise<T> {
-    return new Promise((resolve, reject) => {
-        axios.get(url, {
-            params,
-        }).then((response) => {
-            resolve(response.data)
-        }).catch((err) => {
-            reject(err)
-        })
-    })
+export function fetch<T>(url: string, params: Record<string|number, any> = {}): Promise<T> {
+    return axios.get<T>(url, {
+        params,
+    }).then(res => res.data);
 }
 
 /**
@@ -85,15 +72,8 @@ export function fetch<T>(url: string, params = {}): Promise<T> {
  * @param data
  * @returns {Promise}
  */
-export function post<T>(url: string, data = {}): Promise<T> {
-    return new Promise((resolve, reject) => {
-        axios.post(url, data)
-            .then((response) => {
-                resolve(response.data)
-            }, (err) => {
-                reject(err)
-            })
-    })
+export function post<T>(url: string, data: any = {}): Promise<T> {
+    return axios.post<T>(url, data).then(res => res.data);
 }
 
 /**
@@ -102,15 +82,12 @@ export function post<T>(url: string, data = {}): Promise<T> {
  * @param data
  * @returns {Promise}
  */
-export function patch(url: string, data = {}) {
-    return new Promise((resolve, reject) => {
-        axios.patch(url, data)
-            .then((response) => {
-                resolve(response.data)
-            }, (err) => {
-                reject(err)
-            })
-    })
+export function patch<T>(url: string, data: Record<string|number, any> = {}): Promise<T> {
+    return axios.patch<T>(url, data).then(res => res.data);
+}
+
+export function deleteRequest<T>(url: string, params: Record<string|number, any> = {}): Promise<T> {
+    return axios.delete<T>(url, {params}).then(res => res.data);
 }
 
 /**
@@ -119,22 +96,23 @@ export function patch(url: string, data = {}) {
  * @param data
  * @returns {Promise}
  */
-export function put(url: string, data = {}) {
-    return new Promise((resolve, reject) => {
-        axios.put(url, data)
-            .then((response) => {
-                resolve(response.data)
-            }, (err) => {
-                reject(err)
-            })
-    })
+export function put<T>(url: string, data = {}): Promise<T> {
+    return axios.put<T>(url, data).then(res => res.data);
 }
 
-export default {
-    install(Vue: any) {
-        Vue.prototype.$post = post
-        Vue.prototype.$fetch = fetch
-        Vue.prototype.$patch = patch
-        Vue.prototype.$put = put
-    },
+export function uploadFile<T>(url: string, file: File, name = 'file'): Promise<T> {
+    const data = new FormData();
+    data.append(name, file);
+    return axios.post<T>(url, data, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+            Accept: 'application/json',
+        },
+    }).then(res => res.data);
 }
+
+
+
+
+
+

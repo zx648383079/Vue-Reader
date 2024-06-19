@@ -1,43 +1,29 @@
-import Vue from 'vue'
-import App from './App.vue'
-import router from './router'
-import store from './store'
-import Http from './utils/http'
-import Title from './utils/title'
+import './assets/iconfont/iconfont.css';
+import './assets/css/style.scss';
 
-import { assetsFilter, statusFilter, sizeFilter, agoFilter } from './pipes'
-import { getSessionStorage } from './utils';
-import { TOKEN_KEY } from './store/types';
 
-import '@fortawesome/fontawesome-free/css/all.css';
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 
-Vue.filter('assets', assetsFilter);
-Vue.filter('status', statusFilter);
-Vue.filter('size', sizeFilter);
-Vue.filter('ago', agoFilter);
-Vue.use(Http)
-Vue.use(Title)
+import App from './App.vue';
+import router from './router';
+import { createSerive } from './services';
+import { globalSingleton } from './globe';
+import { i18n } from './i18n';
+import { createDialog } from './components/Dialog';
 
-router.beforeEach((to, from, next) => {
-    const token = getSessionStorage<string>(TOKEN_KEY) // 获取本地存储的token
-    if (to.meta.requireAuth) { // 判断该路由是否需要登录权限
-        if (token && token.length > 0) { // 通过vuex state获取当前的token是否存
-            next()
-        } else {
-            next({
-                path: '/login',
-                query: {
-                    redirect: to.fullPath,
-                }, // 将跳转的路由path作为参数，登录成功后跳转到该路由
-            })
-        }
-    } else {
-        next()
+globalSingleton.reload();
+const app = createApp(App, {
+    onscroll(e: Event) {
+        globalSingleton.emit('scroll', e);
     }
-})
+});
 
-new Vue({
-    router,
-    store,
-    render: (h) => h(App),
-}).$mount('#app');
+
+app.use(createPinia());
+app.use(createSerive());
+app.use(createDialog());
+app.use(i18n);
+app.use(router);
+
+app.mount('#app');

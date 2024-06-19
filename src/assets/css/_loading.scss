@@ -1,0 +1,33 @@
+.loading-bar {
+    --#{$prefix}-loading-color: var(--#{$prefix}-border);
+    --#{$prefix}-loading-size: 1rem;
+    padding: 0.3125rem;
+    span {
+        display: inline-block;
+        border-radius: 50%;
+        width: var(--#{$prefix}-loading-size);
+        height: var(--#{$prefix}-loading-size);
+        background-color: var(--#{$prefix}-loading-color);
+        animation-fill-mode: both;
+        animation: loading-default 1.8s infinite ease-in-out;
+        &:nth-of-type(2) {
+            animation-delay: 0.16s;
+        }
+        &:nth-of-type(3) {
+            animation-delay: 0.32s;
+        }
+    }
+}
+@keyframes loading-default {
+    0%,
+    80%,
+    100% {
+        transform: scale(.8);
+        opacity: 1;
+    }
+
+    40% {
+        transform: scale(.1);
+        opacity: 0;
+    }
+}

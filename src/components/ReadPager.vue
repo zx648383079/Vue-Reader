@@ -13,279 +13,293 @@
         </div>
     </div>
 </template>
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
-
+<script lang="ts" setup>
 import { Pager } from '@/utils/pager';
-@Component
-export default class ReadPager extends Vue {
-    public pager = new Pager('');
+import { getCurrentInstance, reactive, ref } from 'vue';
 
-    public page = 1;
-    public pageCount = 0;
-    public startX = 0; //  开始的滑动位置
-    public isSilde = false; // 记录是否是滑动事件
-    public isRight = 0; // 记录一开始滑动的方向 0 未设置 1 右滑动 2 左滑动 3 已完成切换
-    @Prop({type: Number, default: 0}) public readonly width!: number;
-    @Prop({type: Number, default: 0}) public readonly height!: number;
-    @Prop({type: Number, default: 18}) public readonly fontsize!: number;
-    @Prop({type: Number, default: 10}) public readonly linespace!: number;
-    @Prop({type: Number, default: 4}) public readonly letterspace!: number;
-    @Prop({type: Number, default: 10}) public readonly left!: number;
-    @Prop({type: Number, default: 10}) public readonly top!: number;
-    @Prop({type: String, default: '#333'}) public readonly color!: string;
-    @Prop(String) public readonly font!: string;
-    @Prop(String) public readonly theme!: string;
+const emit = defineEmits(['middle', 'prev', 'next', 'progress']);
+const props = withDefaults(defineProps<{
+    width: number;
+    height: number;
+    fontsize: number;
+    linespace: number;
+    letterspace: number;
+    left: number;
+    top: number;
+    color: string;
+    font: string;
+    theme: string;
+}>(), {
+    width: 0,
+    height: 0,
+    fontsize: 18,
+    linespace: 10,
+    letterspace: 4,
+    left: 10,
+    top: 10,
+    color: '#333'
+});
+let pager = new Pager('');
+const prevPage = ref<HTMLDivElement>();
+const currentPage = ref<HTMLDivElement>();
+const nextPage = ref<HTMLDivElement>();
+const input = reactive({
+    page: 1,
+    pageCount: 0,
+    startX: 0,//  开始的滑动位置
+    isSilde: false, // 记录是否是滑动事件
+    isRight: 0 // 记录一开始滑动的方向 0 未设置 1 右滑动 2 左滑动 3 已完成切换
+});
+const instance = getCurrentInstance();
 
-    public getWidth() {
-        if (this.width < 1) {
-            return (this.$parent as any).width;
-        }
-        return this.width;
+function getWidth() {
+    if (props.width < 1) {
+        return (instance?.parent as any).width;
     }
-    public getHeight() {
-        if (this.height < 1) {
-            return (this.$parent as any).height;
-        }
-        return this.height;
+    return props.width;
+}
+function getHeight() {
+    if (props.height < 1) {
+        return (instance?.parent as any).height;
     }
+    return props.height;
+}
 
-    public isToRight() {
-        return this.isRight === 1;
+function isToRight() {
+    return input.isRight === 1;
+}
+function isToLeft() {
+    return input.isRight === 2;
+}
+function refreshPager(text: string) {
+    pager = new Pager(text);
+}
+function tapIfClick(x: number, y: number) {
+    const centerX = getWidth() / 2;
+    if (Math.abs(centerX  - x) < 50 && Math.abs(getHeight() / 2 - y) < 50) {
+        // 点击中间，触发设置
+        emit('middle');
+        return;
     }
-    public isToLeft() {
-        return this.isRight === 2;
+    emit('middle', false);
+    if (centerX > x) {
+        // 上一页
+        goPrev();
+        return;
     }
-    public refreshPager(text: string) {
-        this.pager = new Pager(text);
+    goNext();
+}
+function touchstart(e: TouchEvent) {
+    input.startX = e.targetTouches[0].clientX;
+    input.isRight = 0;
+    input.isSilde = false;
+}
+function touchmove(e: TouchEvent) {
+    input.isSilde = true;
+    emit('middle', false);
+    if (input.isRight === 3) {
+        return;
     }
-    public tapIfClick(x: number, y: number) {
-        const centerX = this.getWidth() / 2;
-        if (Math.abs(centerX  - x) < 50 && Math.abs(this.getHeight() / 2 - y) < 50) {
-            // 点击中间，触发设置
-            this.$emit('middle');
+    const diff = e.targetTouches[0].clientX - input.startX;
+    if (input.isRight === 0) {
+        input.isRight = diff < 0 ? 1 : 2;
+        if (!readyPage()) {
             return;
         }
-        this.$emit('middle', false);
-        if (centerX > x) {
-            // 上一页
-            this.goPrev();
-            return;
-        }
-        this.goNext();
+    } else if (
+        (isToRight() && diff > 0)
+        || (isToLeft() && diff < 0)
+    ) {
+        return;
     }
-    public touchstart(e: TouchEvent) {
-        this.startX = e.targetTouches[0].clientX;
-        this.isRight = 0;
-        this.isSilde = false;
+    if (Math.abs(diff) > getWidth()) {
+        isToRight() ? applyNext() : applyPrev();
+        return;
     }
-    public touchmove(e: TouchEvent) {
-        this.isSilde = true;
-        this.$emit('middle', false);
-        if (this.isRight === 3) {
-            return;
-        }
-        const diff = e.targetTouches[0].clientX - this.startX;
-        if (this.isRight === 0) {
-            this.isRight = diff < 0 ? 1 : 2;
-            if (!this.readyPage()) {
-                return;
-            }
-        } else if (
-            (this.isToRight() && diff > 0)
-            || (this.isToLeft() && diff < 0)
-        ) {
-            return;
-        }
-        if (Math.abs(diff) > this.getWidth()) {
-            this.isToRight() ? this.applyNext() : this.applyPrev();
-            return;
-        }
-        if (this.isToRight()) {
-            (this.$refs.currentPage as HTMLDivElement).style.left = diff + 'px';
-            return;
-        }
-        (this.$refs.prevPage as HTMLDivElement).style.left = diff - this.getWidth() + 'px';
+    if (isToRight()) {
+        currentPage.value!.style.left = diff + 'px';
+        return;
     }
-    public touchend(e: TouchEvent) {
-        if (!this.isSilde) {
-            this.tapIfClick(this.startX, e.changedTouches[0].clientY);
-            return;
-        }
-        if (this.isRight !== 1 && this.isRight !== 2) {
-            return;
-        }
-        const diff = e.changedTouches[0].clientX - this.startX;
-        if (
-            (this.isToRight() && diff > 0)
-            || (this.isToLeft() && diff < 0)
-        ) {
-            return;
-        }
-        if (this.isToRight()) {
-            this.animation(this.$refs.currentPage  as HTMLDivElement, diff, - this.getWidth(), () => {
-                this.applyNext();
-            });
-            return;
-        }
-        this.animation(this.$refs.prevPage as HTMLDivElement, diff - this.getWidth(), 0, () => {
-            this.applyPrev();
+    prevPage.value!.style.left = diff - getWidth() + 'px';
+}
+function touchend(e: TouchEvent) {
+    if (!input.isSilde) {
+        tapIfClick(input.startX, e.changedTouches[0].clientY);
+        return;
+    }
+    if (input.isRight !== 1 && input.isRight !== 2) {
+        return;
+    }
+    const diff = e.changedTouches[0].clientX - input.startX;
+    if (
+        (isToRight() && diff > 0)
+        || (isToLeft() && diff < 0)
+    ) {
+        return;
+    }
+    if (isToRight()) {
+        animation(currentPage.value!, diff, - getWidth(), () => {
+            applyNext();
         });
+        return;
     }
-    /**
-     * 根据滑动方向准备内容
-     */
-    public readyPage() {
-        if (this.isToRight()) {
-            return this.readyNext();
+    animation(prevPage.value!, diff - getWidth(), 0, () => {
+        applyPrev();
+    });
+}
+/**
+ * 根据滑动方向准备内容
+ */
+function readyPage() {
+    if (isToRight()) {
+        return readyNext();
+    }
+    return readyPrev();
+}
+/**
+ * 准备上一页的内容
+ */
+function readyPrev() {
+    if (input.page < 2) {
+        input.isRight = 3;
+        emit('prev');
+        return false;
+    }
+    applyPage(prevPage.value!, input.page - 1);
+    return true;
+}
+/**
+ * 准备下一页的内容
+ */
+function readyNext() {
+    if (input.page >= input.pageCount) {
+        emit('next');
+        return false;
+    }
+    applyPage(nextPage.value!, input.page + 1);
+    return true;
+}
+/**
+ * 动画执行完成，把内容放到正确的元素上，并把其他元素移开
+ */
+function applyNext() {
+    input.page ++;
+    swapHtml(nextPage.value!, currentPage.value!);
+    currentPage.value!.style.left = '0px';
+    input.isRight = 3;
+    notifyProgress();
+}
+/**
+ * 动画执行完成，把内容放到正确的元素上，并把其他元素移开
+ */
+function applyPrev() {
+    input.page --;
+    swapHtml(prevPage.value!, currentPage.value!);
+    prevPage.value!.style.left = - getWidth() * 1.1 + 'px';
+    input.isRight = 3;
+    notifyProgress();
+}
+/**
+ * 补间动画
+ */
+function animation(
+    element: HTMLDivElement, start: number, end: number, endHandle: () => void) {
+    const diff = start > end ? -1 : 1;
+    let step = 1;
+    const handle = setInterval(() => {
+        start += (step ++) * diff;
+        if ((diff > 0 && start >= end) || (diff < 0 && start <= end)) {
+            clearInterval(handle);
+            element.style.left = end + 'px';
+            endHandle();
+            return;
         }
-        return this.readyPrev();
+        element.style.left = start + 'px';
+    }, 16);
+}
+/**
+ * 移动内容到另一个元素上
+ */
+function swapHtml(src: HTMLDivElement, dist: HTMLDivElement) {
+    for (const item of dist.children) {
+        dist.removeChild(item);
     }
-    /**
-     * 准备上一页的内容
-     */
-    public readyPrev() {
-        if (this.page < 2) {
-            this.isRight = 3;
-            this.$emit('prev');
-            return false;
-        }
-        this.applyPage(this.$refs.prevPage as HTMLDivElement, this.page - 1);
-        return true;
+    for (const item of src.children) {
+        dist.appendChild(item);
     }
-    /**
-     * 准备下一页的内容
-     */
-    public readyNext() {
-        if (this.page >= this.pageCount) {
-            this.$emit('next');
-            return false;
-        }
-        this.applyPage(this.$refs.nextPage as HTMLDivElement, this.page + 1);
-        return true;
+}
+/**
+ * 加载第几页的内容到元素上
+ */
+function applyPage(element: HTMLDivElement, page: number) {
+    element.innerHTML = pager.toHtml(page, props.fontsize,
+    props.linespace, props.letterspace,
+    getWidth() - 2 * props.left,
+    getHeight() - 2 * props.top, props.left, props.top);
+}
+/**
+ * 更改了其他东西更改内容
+ */
+function refreshPage() {
+    const oldCount = input.pageCount;
+    input.pageCount = pager.getPageCountWithSize(props.fontsize,
+    props.linespace, props.letterspace, getWidth() - 2 * props.left,
+    getHeight() - 2 * props.top);
+    if (oldCount > 0 && input.pageCount !== oldCount) {
+        input.page = Math.floor(input.page * input.pageCount / oldCount); // 按比例复原当前页
+        notifyProgress();
     }
-    /**
-     * 动画执行完成，把内容放到正确的元素上，并把其他元素移开
-     */
-    public applyNext() {
-        this.page ++;
-        this.swapHtml(this.$refs.nextPage as HTMLDivElement, this.$refs.currentPage as HTMLDivElement);
-        (this.$refs.currentPage as HTMLDivElement).style.left = '0px';
-        this.isRight = 3;
-        this.notifyProgress();
+    if (input.page < 1) {
+        input.page = 1;
+    } else if (input.pageCount > 0 && input.page > input.pageCount) {
+        input.page = input.pageCount;
     }
-    /**
-     * 动画执行完成，把内容放到正确的元素上，并把其他元素移开
-     */
-    public applyPrev() {
-        this.page --;
-        this.swapHtml(this.$refs.prevPage as HTMLDivElement, this.$refs.currentPage as HTMLDivElement);
-        (this.$refs.prevPage as HTMLDivElement).style.left = - this.getWidth() * 1.1 + 'px';
-        this.isRight = 3;
-        this.notifyProgress();
+    applyPage(currentPage.value!, input.page);
+}
+/**
+ * 通知进度
+ */
+function notifyProgress() {
+    emit('progress', {
+        page: input.page,
+        count: input.pageCount,
+        progress: Math.ceil(input.page * 100 / input.pageCount),
+    });
+}
+/**
+ * 跳转到第几页（无动画）
+ */
+function goPager(page: number) {
+    input.page = page;
+    refreshPage();
+}
+/**
+ * 根据百分比的进度跳转页面
+ */
+function goProgress(progress: number) {
+    goPager(Math.floor(progress * input.pageCount / 100));
+}
+/**
+ * 直接切换到上一页
+ */
+function goPrev() {
+    if (!readyPrev()) {
+        return false;
     }
-    /**
-     * 补间动画
-     */
-    public animation(
-        element: HTMLDivElement, start: number, end: number, endHandle: () => void) {
-        const diff = start > end ? -1 : 1;
-        let step = 1;
-        const handle = setInterval(() => {
-            start += (step ++) * diff;
-            if ((diff > 0 && start >= end) || (diff < 0 && start <= end)) {
-                clearInterval(handle);
-                element.style.left = end + 'px';
-                endHandle();
-                return;
-            }
-            element.style.left = start + 'px';
-        }, 16);
+    animation(prevPage.value!, -getWidth(), 0, () => {
+        applyPrev();
+    });
+}
+/**
+ * 直接切换到下一页
+ */
+function goNext() {
+    if (!readyNext()) {
+        return false;
     }
-    /**
-     * 移动内容到另一个元素上
-     */
-    public swapHtml(src: HTMLDivElement, dist: HTMLDivElement) {
-        for (const item of dist.children) {
-            dist.removeChild(item);
-        }
-        for (const item of src.children) {
-            dist.appendChild(item);
-        }
-    }
-    /**
-     * 加载第几页的内容到元素上
-     */
-    public applyPage(element: HTMLDivElement, page: number) {
-        element.innerHTML = this.pager.toHtml(page, this.fontsize,
-        this.linespace, this.letterspace,
-        this.getWidth() - 2 * this.left,
-        this.getHeight() - 2 * this.top, this.left, this.top);
-    }
-    /**
-     * 更改了其他东西更改内容
-     */
-    public refreshPage() {
-        const oldCount = this.pageCount;
-        this.pageCount = this.pager.getPageCountWithSize(this.fontsize,
-        this.linespace, this.letterspace, this.getWidth() - 2 * this.left,
-        this.getHeight() - 2 * this.top);
-        if (oldCount > 0 && this.pageCount !== oldCount) {
-            this.page = Math.floor(this.page * this.pageCount / oldCount); // 按比例复原当前页
-            this.notifyProgress();
-        }
-        if (this.page < 1) {
-            this.page = 1;
-        } else if (this.pageCount > 0 && this.page > this.pageCount) {
-            this.page = this.pageCount;
-        }
-        this.applyPage(this.$refs.currentPage as HTMLDivElement, this.page);
-    }
-    /**
-     * 通知进度
-     */
-    public notifyProgress() {
-        this.$emit('progress', {
-            page: this.page,
-            count: this.pageCount,
-            progress: Math.ceil(this.page * 100 / this.pageCount),
-        });
-    }
-    /**
-     * 跳转到第几页（无动画）
-     */
-    public goPager(page: number) {
-        this.page = page;
-        this.refreshPage();
-    }
-    /**
-     * 根据百分比的进度跳转页面
-     */
-    public goProgress(progress: number) {
-        this.goPager(Math.floor(progress * this.pageCount / 100));
-    }
-    /**
-     * 直接切换到上一页
-     */
-    public goPrev() {
-        if (!this.readyPrev()) {
-            return false;
-        }
-        this.animation(this.$refs.prevPage as HTMLDivElement, -this.getWidth(), 0, () => {
-            this.applyPrev();
-        });
-    }
-    /**
-     * 直接切换到下一页
-     */
-    public goNext() {
-        if (!this.readyNext()) {
-            return false;
-        }
-        this.animation(this.$refs.currentPage as HTMLDivElement, 0, - this.getWidth(), () => {
-            this.applyNext();
-        });
-    }
+    animation(currentPage.value!, 0, - getWidth(), () => {
+        applyNext();
+    });
 }
 </script>
 <style lang="scss" scoped>

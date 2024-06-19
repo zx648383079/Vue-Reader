@@ -2,11 +2,11 @@
     <div>
         <BackHeader title="目录">
             <a class="right" @click="tapSort" v-if="!isSort">
-                <i class="fa fa-arrow-up"></i>
+                <i class="iconfont icon-arrow-up"></i>
                 正序
             </a>
             <a class="right" @click="tapSort" v-else>
-                <i class="fa fa-arrow-down"></i>
+                <i class="iconfont icon-arrow-down"></i>
                 倒序
             </a>
         </BackHeader>
@@ -19,48 +19,47 @@
         </div>
     </div>
 </template>
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import { IChapter, getChapters } from '../api/book';
+<script lang="ts" setup>
+import type { IChapter } from '@/api/model';
 import BackHeader from '@/components/BackHeader.vue';
-import { dispatchChapters } from '@/store/dispatches';
-import BookRecord from '@/utils/book';
+import { useBook } from '@/services';
+import { useBookStore } from '@/stores/book';
+import { parseNumber } from '@/utils';
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
-@Component({
-    components: {
-        BackHeader,
-    },
-})
-export default class Chapter extends Vue {
-    public items?: IChapter[] = [];
-    public isSort: boolean = false;
-    public activeChapter: number = 0;
+const router = useRouter();
+const route = useRoute();
+const book = useBook();
+const store = useBookStore();
+const items = ref<IChapter[]>([]);
+const isSort = ref(false);
+const activeChapter = ref(0);
 
-    public created() {
-        const bookId = parseInt(this.$route.params.book, 10);
-        if (!bookId) {
-            return;
-        }
-        dispatchChapters(bookId).then(res => {
-            this.items = res;
-        });
-        const record = BookRecord.getItem(bookId);
-        if (record) {
-            this.activeChapter = record.chapter_id;
-        }
-    }
+function tapChapter(item: IChapter) {
+    router.push('/read/' + item.id);
+}
 
-    public tapChapter(item: IChapter) {
-        this.$router.push('/read/' + item.id);
-    }
-
-    public tapSort() {
-        this.isSort = !this.isSort;
-        if (this.items) {
-            this.items.reverse();
-        }
+function tapSort() {
+    isSort.value = !isSort.value;
+    if (items.value) {
+        items.value.reverse();
     }
 }
+
+onMounted(() => {
+    const bookId = parseNumber(route.params.book);
+    if (!bookId) {
+        return;
+    }
+    store.getChapters(bookId).then(res => {
+        items.value = res;
+    });
+    const record = book.getItem(bookId);
+    if (record) {
+        activeChapter.value = record.chapter_id;
+    }
+});
 </script>
 <style lang="scss" scoped>
 .box {

@@ -3,49 +3,50 @@
         <header>
             <span>目录</span>
             <a class="right" @click="tapSort" v-if="!isSort">
-                <i class="fa fa-arrow-up"></i>
+                <i class="iconfont icon-arrow-up"></i>
                 正序
             </a>
             <a class="right" @click="tapSort" v-else>
-                <i class="fa fa-arrow-down"></i>
+                <i class="iconfont icon-arrow-down"></i>
                 倒序
             </a>
         </header>
         <div class="box">
-            <div v-for="item in items" :key="item.id" :class="['item', item.id == chapter ? 'active' : '']" @click="tapChapter(item)">
+            <div v-for="item in items" :key="item.id" :class="['item', item.id == props.chapter ? 'active' : '']" @click="tapChapter(item)">
                 <div class="title">{{ item.title }}</div>
                 <div class="size">{{ item.size }}</div>
             </div>
         </div>
     </div>
 </template>
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-import { IChapter, getChapters } from '../api/book';
-import { dispatchChapters } from '@/store/dispatches';
-
-@Component
-export default class SliderMenu extends Vue {
-    public items?: IChapter[] = [];
-    public isSort: boolean = false;
-    @Prop(Number) public readonly chapter!: number;
+<script lang="ts" setup>
+import type { IChapter } from '@/api/model';
+import { useBookStore } from '@/stores/book';
+import { ref } from 'vue';
 
 
-    public refresh(book: number) {
-        dispatchChapters(book).then(res => {
-            this.items = res;
-        });
-    }
+const store = useBookStore();
+const props = defineProps<{
+    chapter: number;
+}>();
+const emit = defineEmits<(e: 'read', args: IChapter) => void>();
+const items = ref<IChapter[]>([]);
+const isSort = ref(false);
 
-    public tapChapter(item: IChapter) {
-        this.$emit('read', item);
-    }
+function refresh(book: number) {
+    store.getChapters(book).then(res => {
+        items.value = res;
+    });
+}
 
-    public tapSort() {
-        this.isSort = !this.isSort;
-        if (this.items) {
-            this.items.reverse();
-        }
+function tapChapter(item: IChapter) {
+    emit('read', item);
+}
+
+function tapSort() {
+    isSort.value = !isSort.value;
+    if (items.value) {
+        items.value.reverse();
     }
 }
 </script>

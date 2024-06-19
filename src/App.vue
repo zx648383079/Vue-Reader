@@ -1,12 +1,20 @@
 <template>
-    <div id="app" v-zo-title="$route.meta.title">
-        <keep-alive>
-            <router-view v-if="$route.meta.keepAlive"></router-view>
-        </keep-alive>
-        <router-view v-if="!$route.meta.keepAlive"></router-view>
-    </div>
+    <RouterView v-slot="{ Component, route }">
+        <transition :name="`${route.meta.transition || 'fade'}`">
+            <component :is="Component"></component>
+        </transition>
+    </RouterView>
 </template>
+<script setup lang="ts">
+import { RouterView } from 'vue-router';
+import { useAuth } from './services';
+import { useAuthStore } from './stores/auth';
+const store = useAuthStore()
 
-<style lang="scss">
-@import './assets/css/theme.scss';
-</style>
+store.isLoading = true;
+useAuth().systemBoot().then(res => {
+    store.isLoading = false;
+    store.guest = !res;
+    store.user = res;
+});
+</script>

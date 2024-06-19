@@ -11,17 +11,16 @@
         </div>
     </div>
 </template>
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
-import {IBook} from '../api/book';
+<script lang="ts" setup>
+import { useRouter } from "vue-router";
+const props = defineProps<{
+    book: IBook
+}>();
 
-@Component
-export default class BookItem extends Vue {
-    @Prop(Object) public readonly book!: IBook
+const router = useRouter();
 
-    public tapBook() {
-        this.$router.push('/book/' + this.book.id);
-    }
+function tapBack(): void {
+    router.push('/book/' + props.book.id);
 }
 </script>
 <style lang="scss" scoped>

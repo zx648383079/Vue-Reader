@@ -1,14 +1,14 @@
 <template>
     <div>
-        <BackHeader :title="$route.meta.title">
+        <BackHeader :title="$route.meta.title as any">
             <a v-if="user" class="right" @click="tapLogout">
-                <i class="fa fa-sign-out-alt"></i>
+                <i class="iconfont icon-sign-out-alt"></i>
             </a>
         </BackHeader>
         <div class="has-header has-footer">
             <div class="user-header">
                 <div class="avatar">
-                    <img :src="user ? user.avatar : '/assets/images/avatar/1.png' | assets">
+                    <img :src="assetsFilter(user ? user.avatar : '/assets/images/avatar/1.png')">
                 </div>
                 <div class="name">
                     欢迎您，
@@ -25,43 +25,42 @@
         <TabBar/>
     </div>
 </template>
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+<script lang="ts" setup>
+import type { IUser } from '@/api/model';
 import BackHeader from '@/components/BackHeader.vue';
 import TabBar from '@/components/TabBar.vue';
-import { IUser } from '../api/book';
-import { dispatchUser, dispatchLogout } from '../store/dispatches';
+import { useAuth } from '@/services';
+import { useAuthStore } from '@/stores/auth';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { assetsFilter } from '@/pipes';
 
-@Component({
-    components: {
-        BackHeader,
-        TabBar,
-    },
-})
-export default class Member extends Vue {
-    public user: IUser | null = null;
+const store = useAuthStore();
+const auth = useAuth();
+const router = useRouter();
 
-    public created() {
-        dispatchUser().then(res => {
-            this.user = res;
-        });
-    }
+const user = ref<IUser|null>();
 
-    public tapLogin() {
-        this.$router.push('/login');
-    }
-
-    public tapLogout() {
-        dispatchLogout().then(() => {
-            this.user = null;
-        });
-    }
+function tapLogin() {
+    router.push('/login');
 }
+
+function tapLogout() {
+    auth.logout().then(() => {
+        user.value = null;
+    });
+}
+
+store.getUser().then(res => {
+    user.value = res;
+});
+
 </script>
 <style lang="scss" scoped>
+@import '../assets/css/theme';
 .user-header {
-    background-color: #f04e49;
-    color: #fff;
+    background-color: var(--#{$prefix}-primary);
+    color: var(--#{$prefix}-primary-text);
     position: relative;
     padding-top: 0.5625rem;
     padding-bottom: 4rem;
@@ -82,7 +81,7 @@ export default class Member extends Vue {
             content: "";
             width: 6.25rem;
             height: 6.25rem;
-            border: 0.125rem solid #99e3ff;
+            border: 0.125rem solid var(--#{$prefix}-border);
             border-radius: 100%;
             position: absolute;
             left: -0.3125rem;
@@ -93,11 +92,11 @@ export default class Member extends Vue {
     .name {
         padding: 2.4rem 0;
         margin-left: 7.5rem;
-        color: #fff;
+        color: var(--#{$prefix}-primary-text);
     }
 }
 .card-box {
-    background-color: #fff;
+    background-color: var(--#{$prefix}-panel);
     margin: 0 10px;
     min-height: 100px;
     margin-top: -40px;

@@ -1,14 +1,14 @@
 <template>
-    <div>
+    <div v-if="book">
         <header>
             <a class="back" @click="tapBack">
-                <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                <i class="iconfont icon-chevron-left" aria-hidden="true"></i>
             </a>
             <a class="more" href="javascript:;">
-                <i class="fa fa-ellipsis-h"></i>
+                <i class="iconfont icon-ellipsis-h"></i>
             </a>
             <div class="cover">
-                <img :src="book.cover" alt="">
+                <img :src="assetsFilter(book.cover)" alt="">
             </div>
             <div class="name">{{ book.name }}</div>
             <div class="tag">
@@ -19,15 +19,15 @@
         </header>
         <div class="tab-bar">
             <a href="">
-                <span>{{ book.size|size }}字</span>
-                <span>{{ book.over_at | status }}</span>
+                <span>{{ sizeFilter(book.size) }}字</span>
+                <span>{{ statusFilter(book.over_at) }}</span>
             </a>
             <a href="">
-                <span>{{ book.click_count|size }}</span>
+                <span>{{ sizeFilter(book.click_count) }}</span>
                 <span>点击</span>
             </a>
             <a href="">
-                <span>{{ book.chapter_count|size }}</span>
+                <span>{{ sizeFilter(book.chapter_count) }}</span>
                 <span>章节</span>
             </a>
         </div>
@@ -35,18 +35,18 @@
         <div class="line-item" @click="tapChapter">
             <span>目录</span>
             <div class="right">
-                <span v-if="book.last_chapter">连载至{{ book.last_chapter.title.substr(0, 10) }}</span>
-                <i class="fa fa-chevron-right"></i>
+                <span v-if="book.last_chapter">连载至{{ book.last_chapter.title?.substring(0, 10) }}</span>
+                <i class="iconfont icon-chevron-right"></i>
             </div>
         </div>
 
         <footer>
             <a v-if="!isFollow" @click="tapFollow">
-                <i class="fa fa-plus"></i>
+                <i class="iconfont icon-plus"></i>
                 加入书架
             </a>
             <a class="followed" v-else>
-                <i class="fa fa-check"></i>
+                <i class="iconfont icon-check"></i>
                 已在书架
             </a>
             <a @click="tapRead">
@@ -55,72 +55,78 @@
         </footer>
     </div>
 </template>
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import { IBook, getBook } from '../api/book';
-import {Cell, Toast} from 'mint-ui';
-import BookRecord from '@/utils/book';
-import { dispatchBook } from '@/store/dispatches';
+<script lang="ts" setup>
+import type { IBook } from '@/api/model';
+import { useDialog } from '@/components/Dialog';
+import { useBook } from '@/services';
+import { useBookStore } from '@/stores/book';
+import { parseNumber } from '@/utils';
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { assetsFilter } from '@/pipes';
+import { sizeFilter } from '@/pipes';
+import { statusFilter } from '@/pipes';
 
-Vue.component(Cell.name, Cell);
+const record = useBook();
+const store = useBookStore();
+const route = useRoute();
+const router = useRouter();
+const toast = useDialog();
+const book = ref<IBook>();
+const isFollow = ref(false);
 
-@Component
-export default class Book extends Vue {
-    public book?: IBook;
-    public isFollow: boolean = false;
 
-    public created() {
-        this.book = {
-            id: parseInt(this.$route.params.id, 10),
-        };
-        this.isFollow = BookRecord.has(this.book.id);
-        dispatchBook(this.book.id).then(res => {
-            if (!res) {
-                Toast('书籍已失联');
-                this.tapBack();
-                return;
-            }
-            this.book = res;
-            this.$route.meta.title = res.name;
-            this.$forceUpdate();
-        }).catch(err => {
-            Toast('书籍已失联');
-            this.tapBack();
-        });
+function tapBack() {
+    if (window.history.length <= 1) {
+        router.push('/');
+        return;
     }
-
-    public tapBack() {
-        if (window.history.length <= 1) {
-            this.$router.push('/');
-            return;
-        }
-        this.$router.go(-1);
-    }
-
-    public tapChapter() {
-        if (!this.book) {
-            return;
-        }
-        this.$router.push('/chapter/' + this.book.id);
-    }
-
-    public tapRead() {
-        if (!this.book || !this.book.first_chapter) {
-            return;
-        }
-        const record = BookRecord.getItem(this.book.id);
-        this.$router.push('/read/' + (record ? record.chapter_id : this.book.first_chapter.id));
-    }
-
-    public tapFollow() {
-        if (!this.book || !this.book.first_chapter) {
-            return;
-        }
-        BookRecord.add(this.book, this.book.first_chapter, 0);
-        this.isFollow = true;
-        Toast('已成功加入书架');
-    }
+    router.go(-1);
 }
+
+function tapChapter() {
+    if (!book.value) {
+        return;
+    }
+    router.push('/chapter/' + book.value.id);
+}
+
+function tapRead() {
+    if (!book.value || !book.value.first_chapter) {
+        return;
+    }
+    const re = record.getItem(book.value.id);
+    router.push('/read/' + (re ? re.chapter_id : book.value.first_chapter.id));
+}
+
+function tapFollow() {
+    if (!book.value || !book.value.first_chapter) {
+        return;
+    }
+    record.add(book.value, book.value.first_chapter, 0);
+    isFollow.value = true;
+    toast.success('已成功加入书架');
+}
+
+onMounted(() => {
+    book.value = {
+        id: parseNumber(route.params.id),
+    };
+    isFollow.value = record.has(book.value.id);
+    store.getBook(book.value.id).then(res => {
+        if (!res) {
+            toast.error('书籍已失联');
+            tapBack();
+            return;
+        }
+        book.value = res;
+        route.meta.title = res.name;
+    }).catch(err => {
+        toast.error('书籍已失联');
+        tapBack();
+    });
+});
+
 </script>
 <style lang="scss" scoped>
 header {

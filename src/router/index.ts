@@ -1,5 +1,4 @@
-import Vue from 'vue';
-import Router from 'vue-router';
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import Home from '@/pages/Home.vue';
 import Category from '@/pages/Category.vue';
 import Search from '@/pages/Search.vue';
@@ -9,11 +8,12 @@ import Read from '@/pages/Read.vue';
 import Bang from '@/pages/Bang.vue';
 import Member from '@/pages/Member.vue';
 import Login from '@/pages/Login.vue';
+import { globalSingleton } from '@/globe';
+import { handleChangeLocale } from '@/i18n';
+import { useAuth, useTheme } from '@/services';
 
-Vue.use(Router)
 
-export default new Router({
-    routes: [
+const routes: Readonly<RouteRecordRaw[]> = [
         {
             path: '/',
             name: 'home',
@@ -86,5 +86,52 @@ export default new Router({
                 title: '阅读',
             },
         },
-    ],
-})
+];
+
+const router = createRouter({
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes,
+    scrollBehavior(this: Router, to, from, savedPosition) {
+        if (savedPosition) {
+            return savedPosition;
+        }
+        const position: any = {};
+        if (to.hash) {
+            position.selector = to.hash;
+            if (document.querySelector(to.hash)) {
+                return position;
+            }
+            return;
+        }
+        return new Promise(resolve => {
+            if (to.matched.some(m => m.meta.scrollToTop)) {
+                position.x = 0
+                position.y = 0
+            }
+            globalSingleton.once('scroll', () => {
+                resolve(position);
+            });
+        });
+    },
+});
+
+router.beforeEach(async(to, from, next) => {
+    const auth = useAuth();
+    if (to.meta.requireAuth && auth.isGuest) {
+        return next({
+            path: '/login',
+            query: {
+                redirect_uri: to.fullPath,
+            }, // 将跳转的路由path作为参数，登录成功后跳转到该路由
+        });
+    }
+    await handleChangeLocale(to.params.locale as string);
+    return next();
+});
+router.afterEach((to, from) => {
+    if (to.meta.title) {
+        useTheme().setTitle(to.meta.title as string);
+    }
+});
+
+export default router

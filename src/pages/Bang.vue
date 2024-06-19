@@ -1,100 +1,93 @@
 <template>
     <div>
-        <BackHeader :title="title"></BackHeader>
+        <BackHeader :title="input.title"></BackHeader>
         <div class="has-header">
             <div class="tab-header">
-                <a v-for="(item, index) in tabs" :key="index" :class="activeTab == index ? 'active': ''" @click="tapTab(index)">{{ item.name }}</a>
+                <a v-for="(item, index) in tabItems" :key="index" :class="input.activeTab == index ? 'active': ''" @click="tapTab(index)">{{ item.name }}</a>
             </div>
-            <div class="box"
-                v-infinite-scroll="loadMore"
-                infinite-scroll-disabled="isLoading"
-                infinite-scroll-distance="10">
+            <PullToRefresh class="box" @more="loadMore" @refresh="refresh">
                 <BookItem v-for="(item, index) in items" :key="index" :book="item"></BookItem>
-            </div>
+            </PullToRefresh>
         </div>
     </div>
 </template>
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+<script lang="ts" setup>
+import { getBookList } from '@/api/book';
+import type { IBook } from '@/api/model';
 import BackHeader from '@/components/BackHeader.vue';
 import BookItem from '@/components/BookItem.vue';
-import { InfiniteScroll } from 'mint-ui';
-import { IBook, getBookList } from '@/api/book';
+import PullToRefresh from '@/components/PullToRefresh.vue';
+import { reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
-Vue.use(InfiniteScroll);
+const route = useRoute();
 
-@Component({
-    components: {
-        BackHeader,
-        BookItem,
+const tabItems = [
+    {
+        name: '总榜',
+        key: 'all',
     },
-})
-export default class Bang extends Vue {
-    public tabs: any[] = [
-        {
-            name: '总榜',
-            key: 'all',
-        },
-        {
-            name: '月榜',
-            key: 'month',
-        },
-        {
-            name: '周榜',
-            key: 'week',
-        },
-    ];
-    public activeTab: number = 0;
-    public category: number = 0;
-    public title: string = '分类榜单';
-    public items: IBook[] = [];
-    public hasMore = true;
-    public page = 1;
-    public isLoading = false;
+    {
+        name: '月榜',
+        key: 'month',
+    },
+    {
+        name: '周榜',
+        key: 'week',
+    },
+];
 
-    public created() {
-        this.category = parseInt(this.$route.query.category + '', 10);
-        this.title = this.$route.meta.title = this.$route.query.title + '榜单';
-        this.refresh();
-    }
+const input = reactive({
+    activeTab: 0,
+    category: 0,
+    title: '分类榜单',
+    hasMore: true,
+    page: 1,
+    isLoading: false
+});
+const items = ref<IBook[]>([]);
 
-    public tapTab(index: number) {
-        this.activeTab = index;
-        this.refresh();
-    }
-
-    public loadMore() {
-        this.goPage( ++ this.page);
-    }
-
-    /**
-     * refresh
-     */
-    public refresh() {
-        this.items = [];
-        this.isLoading = false;
-        this.hasMore = true;
-        this.goPage(this.page = 1);
-    }
-
-    public goPage(page: number) {
-        if (this.isLoading || !this.hasMore) {
-            return;
-        }
-        this.isLoading = true;
-        getBookList({
-            category: this.category,
-            top: this.tabs[this.activeTab].key,
-            page,
-        }).then(res => {
-            this.hasMore = res.paging.more;
-            this.isLoading = false;
-            res.data.forEach((item: IBook) => {
-                this.items.push(item);
-            });
-        })
-    }
+function tapTab(index: number) {
+    input.activeTab = index;
+    refresh();
 }
+
+function loadMore() {
+    goPage( ++ input.page);
+}
+
+/**
+ * refresh
+ */
+function refresh() {
+    items.value = [];
+    input.isLoading = false;
+    input.hasMore = true;
+    goPage(input.page = 1);
+}
+
+function goPage(page: number) {
+    if (input.isLoading || !input.hasMore) {
+        return;
+    }
+    input.isLoading = true;
+    getBookList({
+        category: input.category,
+        top: tabItems[input.activeTab].key,
+        page,
+    }).then(res => {
+        input.hasMore = res.paging.more;
+        input.isLoading = false;
+        res.data.forEach((item: IBook) => {
+            items.value.push(item);
+        });
+    })
+}
+
+input.category = parseInt(route.query.category + '', 10);
+input.title = route.meta.title = route.query.title + '榜单';
+refresh();
+
 </script>
 <style lang="scss" scoped>
 .tab-header {

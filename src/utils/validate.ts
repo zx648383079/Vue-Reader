@@ -1,3 +1,12 @@
+export function isNumber(val: any): boolean {
+    if (typeof val === 'number') {
+        return true;
+    }
+    if (typeof val !== 'string') {
+        return false;
+    }
+    return /^\d*(\.\d*)?$/.test(val);
+}
 
 /**
  * 判断是否为空

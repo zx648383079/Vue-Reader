@@ -1,0 +1,70 @@
+@import "functions";
+@import "theme";
+@import "root";
+@import "mixin";
+@import "loading";
+@import "utilities";
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+    background-color: var(--#{$prefix}-body);
+}
+
+a {
+    text-decoration: none;
+}
+
+.has-header {
+    margin-top: 2.75rem;
+}
+.has-footer {
+    margin-bottom: 3.125rem;
+}
+
+.search-tip-box {
+    display: block;
+    padding-left: .625rem;
+    background-color: var(--#{$prefix}-panel);
+    li {
+        height: 1.875rem;
+        line-height: 1.875rem;
+        &:not(:last-of-type) {
+            border-bottom: 1px solid var(--#{$prefix}-border);
+        }
+    }
+}
+
+.search-recommend-box {
+    .panel {
+        padding: 0 .625rem .625rem;
+        background-color: var(--#{$prefix}-panel);
+        margin-bottom: .3125rem;
+        .panel-header {
+            height: 1.875rem;
+            line-height: 1.875rem;
+            .iconfont {
+                float: right;
+                margin-top: .5rem;
+            }
+        }
+        .panel-body {
+            a {
+                border: 1px solid var(--#{$prefix}-border);
+                border-radius: 2px;
+                color: var(--#{$prefix}-body-text);
+                padding: 0 2px;
+                line-height: 1rem;
+            }
+        }
+    }
+}

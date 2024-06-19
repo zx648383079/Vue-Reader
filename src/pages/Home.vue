@@ -2,15 +2,15 @@
     <div>
         <div class="box" v-if="items && items.length > 0">
             <ul>
-                <li class="list-item" v-for="(item, index) in items" :key="index" :data-type="activeSwiper == index ? 1 : 0">
+                <li class="list-item" v-for="(item, index) in items" :key="index" :data-type="input.activeSwiper == index ? 1 : 0">
                     <div class="book-item" @touchstart.capture="touchStart" :data-index="index" @touchend.capture="touchEnd" @click="tapBook(item)">
                         <div class="cover">
-                            <img :src="item.cover">
+                            <img :src="assetsFilter(item.cover)">
                         </div>
                         <div class="info">
                             <div class="name">{{ item.name }}</div>
                             <div class="tag">{{ item.author_name }}</div>
-                            <div class="desc">{{ item.read_at | ago }}· {{ item.chapter_title }}</div>
+                            <div class="desc">{{ agoFilter(item.read_at) }}· {{ item.chapter_title }}</div>
                         </div>
                     </div>
                     <div class="delete" @click="deleteItem" :data-index="index">删除</div>
@@ -24,62 +24,62 @@
     </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+<script lang="ts" setup>
 import TabBar from '@/components/TabBar.vue';
-import Book, { IBookRecord } from '@/utils/book';
+import { useBook } from '@/services';
+import type { IBookRecord } from '@/services/book';
+import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { assetsFilter } from '@/pipes';
+import { agoFilter } from '@/pipes';
 
-@Component({
-    components: {
-        TabBar,
-    },
-})
-export default class Home extends Vue {
-    public items?: IBookRecord[] = [];
-    public startX: number = 0;
-    public endX: number = 0;
-    public activeSwiper: number = -1;
+const router = useRouter();
+const book = useBook();
+const items = ref<IBookRecord[]>([]);
+const input = reactive({
+    startX: 0,
+    endX: 0,
+    activeSwiper: -1
+});
 
-    public created() {
-        this.items = Book.getItems();
-    }
-
-    public tapBook(item: IBookRecord) {
-        this.$router.push('/read/' + item.chapter_id);
-    }
-
-    // 滑动开始
-    public touchStart(e: TouchEvent){
-        this.startX = e.touches[0].clientX;
-    }
-    // 滑动结束
-    public touchEnd(e: TouchEvent){
-        this.endX = e.changedTouches[0].clientX;
-        if (this.startX - this.endX > 30){
-            this.activeSwiper = (e.currentTarget as any).dataset.index;
-        }
-        if (this.startX - this.endX < -30){
-            this.activeSwiper = -1;
-        }
-        this.startX = 0;
-        this.endX = 0;
-    }
-    // 判断当前是否有滑块处于滑动状态
-    public checkSlide(){
-        return this.activeSwiper > -1;
-    }
-    // 删除
-    public deleteItem(e: any){
-        if (!this.items) {
-            return;
-        }
-        const index = e.currentTarget.dataset.index;
-        this.activeSwiper = -1;
-        const item = this.items[index];
-        this.items.splice(index, 1);
-        Book.remove(item.id);
-    }
+function tapBook(item: IBookRecord) {
+    router.push('/read/' + item.chapter_id);
 }
+
+// 滑动开始
+function touchStart(e: TouchEvent){
+    input.startX = e.touches[0].clientX;
+}
+// 滑动结束
+function touchEnd(e: TouchEvent){
+    input.endX = e.changedTouches[0].clientX;
+    if (input.startX - input.endX > 30){
+        input.activeSwiper = (e.currentTarget as any).dataset.index;
+    }
+    if (input.startX - input.endX < -30){
+        input.activeSwiper = -1;
+    }
+    input.startX = 0;
+    input.endX = 0;
+}
+// 判断当前是否有滑块处于滑动状态
+function checkSlide(){
+    return input.activeSwiper > -1;
+}
+// 删除
+function deleteItem(e: any){
+    if (!items.value) {
+        return;
+    }
+    const index = e.currentTarget.dataset.index;
+    input.activeSwiper = -1;
+    const item = items.value[index];
+    items.value.splice(index, 1);
+    book.remove(item.id);
+}
+
+items.value = book.getItems();
+
 </script>
 <style lang="scss" scoped>
 .empty {

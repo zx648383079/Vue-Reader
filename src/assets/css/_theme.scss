@@ -1,0 +1,91 @@
+$prefix: 'zre' !default;
+
+
+$primary: #05a6b1;
+$primaryText: #fff;
+
+$disabledText: #FF9787;
+$strongText: red;
+$shadow: rgba(51, 51, 51, 0.7);
+$border: #ccc;
+$body: #f4f4f4;
+$bodyText: #333;
+$hover: #ccc;   // 相对与body的变化
+
+$panel: white;
+
+$gray: #6c757d;
+$grayText: #fff;
+
+$secondary: #ccc;        // 相对于 body 的变化
+$secondaryText: #b3b1b1; // 相对预 bodyTet 的变化
+
+$danger: #d22222;
+$danger-text: #fff;
+$success: #198754;
+$success-text: #fff;
+$info: #0dcaf0;
+$info-text: #fff;
+$warning: #ffc107;
+$warning-text: #fff;
+
+$dialog: $panel;
+$dialogMask: rgba(0, 0, 0, .3);
+$dialogText: #333;
+
+$linkText: #0d6efd;
+$linkHoverText: #0a58ca;
+
+$input: #fff;
+$inputText: #333;
+$inputBorder: #ced4da;
+$inputHoverBorder: rgb(47, 65, 86);
+$inputHoverShadow: #0d6efd40;
+
+
+// 黑暗模式
+$dark-primary: #000;
+$dark-primaryText: #fff;
+$dark-secondary: #767676;
+$dark-disabledText: #ccc;
+$dark-strongText: red;
+$dark-shadow: rgba(200, 200, 200, 0.7);
+$dark-border: $primary;
+
+$dark-gray: #6c757d;
+$dark-grayText: #fff;
+
+$dark-body: #333;
+$dark-hover: #555;
+$dark-panel: #222;
+$dark-bodyText: #fff;
+$dark-secondaryText: #b3b1b1;
+$dark-dialog: #333;
+$dark-dialogText: #fff;
+$dark-dialogMask: rgba(255,255,255, .3);
+
+$dark-danger: #d22222;
+$dark-danger-text: #fff;
+$dark-success: #198754;
+$dark-success-text: #fff;
+$dark-info: #0dcaf0;
+$dark-info-text: #fff;
+$dark-warning: #ffc107;
+$dark-warning-text: #fff;
+
+$dark-linkText: #0d6efd;
+$dark-linkHoverText: #0a58ca;
+
+$dark-input: #23222b;
+$dark-inputText: #fff;
+$dark-inputBorder: #7c7b82;
+$dark-inputHoverBorder: rgb(47, 65, 86);
+$dark-inputHoverShadow: #0d6efd40;
+
+
+
+$colorHoverOffset: 12%; // Hover 颜色加深程度
+$colorActiveOffset: 20%; // 点击后 颜色加深程度
+
+$formRadius: .375rem;
+$lineHeight: 2.5rem;

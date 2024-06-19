@@ -2,110 +2,99 @@
     <header>
         <div class="search-box">
             <div class="search-input">
-                <i class="fa fa-search" aria-hidden="true" @click="tapSearch"></i>
-                <input type="text" :value="value"
-                @input="updateVal($event.target.value)" @keyup="onKeyUp" placeholder="搜索" @click="tapFocus" autocomplete="off">
-                <i class="fa fa-times-circle" v-if="currrent && currrent.length > 0" @click="tapClear"></i>
+                <i class="iconfont icon-search" aria-hidden="true" @click="tapSearch"></i>
+                <input type="text" :value="model" @input="updateVal(($event as any).target?.value)" @keyup="onKeyUp" placeholder="搜索" @click="tapFocus" autocomplete="off">
+                <i class="iconfont icon-times-circle" v-if="model && model.length > 0" @click="tapClear"></i>
             </div>
             <a class="cancel-btn" @click="tapBack">取消</a>
         </div>
     </header>
 </template>
-<script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
 
-@Component
-export default class SearchHeader extends Vue {
-    @Prop(String) public readonly value!: string;
-    public currrent = '';
+const router = useRouter();
+const emit = defineEmits(['focus', 'enter', 'keyup']);
+const model = defineModel({type: String, default: ''});
 
-    public tapBack() {
-        if (this.value && this.value.length > 0) {
-            this.tapClear();
-            return;
-        }
-        if (window.history.length <= 1) {
-            this.$router.push('/');
-            return;
-        }
-        this.$router.go(-1);
+function tapBack() {
+    if (model.value && model.value.length > 0) {
+        tapClear();
+        return;
     }
-
-    public updateVal(val: string) {
-        this.$emit('input', val);
-        this.currrent = val;
+    if (window.history.length <= 1) {
+        router.push('/');
+        return;
     }
-
-    public tapClear() {
-        this.updateVal('');
+    router.go(-1);
+}
+function updateVal(val: string|any) {
+    model.value = val;
+}
+function tapClear() {
+    updateVal('');
+}
+function onKeyUp(event: KeyboardEvent) {
+    if (!model.value || model.value.trim().length === 0) {
+        return;
     }
-
-    public onKeyUp(event: any) {
-        if (!this.value || this.value.trim().length === 0) {
-            return;
-        }
-        if (event.which === 13) {
-            this.$emit('enter', this.value);
-            return;
-        }
-        this.$emit('keyup', event);
+    if (event.key === 'Enter') {
+        emit('enter', model.value);
+        return;
     }
-
-    public tapSearch() {
-        this.$emit('enter', this.value);
-    }
-
-    public tapFocus() {
-        this.$emit('focus');
-    }
+    emit('keyup', event);
+}
+function tapSearch() {
+    emit('enter', model.value);
+}
+function tapFocus() {
+    emit('focus');
 }
 </script>
 <style lang="scss" scoped>
-header {
-    width: 100%;
-    height: 2.75rem;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: rgb(240, 78, 73);
-    color: #fff;
-    text-align: center;
-    z-index: 99;
-    border: 0;
-    .search-box {
-        padding: 5px;
-        line-height: 36px;
-        display: grid;
-        grid-template-columns: 1fr 54px;
-        .search-input {
-            position: relative;
+@import '../assets/css/theme';
+.search-box {
+    padding: 0.3125rem;
+    line-height: 2.25rem;
+    display: grid;
+    grid-template-columns: 1fr 3.375rem;
+    form {
+        position: relative;
+    }
+    .iconfont {
+        position: absolute;
+        // top: 10px;
+        z-index: 99;
+        color: var(--#{$prefix}-secondary-text);
+        &.icon-search {
+            left: 5px;
         }
-        .fa {
-            position: absolute;
-            top: 10px;
-            z-index: 99;
-            color: #666;
-            &.fa-search {
-                left: 5px;
-            }
-            &.fa-times-circle {
-                right: 5px;
-            }
+        &.icon-times-circle {
+            right: 5px;
         }
-        input {
-            margin-top: 0.125rem;
-            width: 100%;
-            font-size: 1.25rem;
-            padding: 4px 29px;
-            box-sizing: border-box;
-            background-color: #f4f4f4;
-            border: 0;
+    }
+    input {
+        margin-top: 0.125rem;
+        width: 100%;
+        font-size: 1.25rem;
+        padding: 4px 29px;
+        box-sizing: border-box;
+        outline: none;
+        background-color: var(--#{$prefix}-body);
+        border: 0;
+    }
+    .cancel-btn {
+        color: var(--#{$prefix}-primary-text);
+    }
+    .home-btn {
+        font-size: 28px;
+        .iconfont {
+            position: static;
+            color: var(--#{$prefix}-primary-text);
         }
-        .cancel-btn {
-            color: #fff;
-        }
+    }
+    &.under-search {
+        grid-template-columns: 54px 1fr;
     }
 }
 </style>
-
